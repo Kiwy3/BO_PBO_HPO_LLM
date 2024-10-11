@@ -79,3 +79,5 @@ def loss_function(HP):
     out = trainer.validate(model,dataloaders = data,verbose = True)
     return out[0]["train_loss"]
 
+a = loss_function((2, 16, 0.002))
+print(a)

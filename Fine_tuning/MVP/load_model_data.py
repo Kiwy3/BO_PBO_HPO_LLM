@@ -1,7 +1,3 @@
-import os
-os.chdir("/home/jan/Documents/Nathan1/ST30_1/Fine_tuning/MVP")
-os.getcwd()
-
 #Load model
 import litgpt
 from litgpt.scripts.download import download_from_hub
