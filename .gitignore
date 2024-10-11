@@ -1,2 +1,5 @@
 .v-env
 v-env/
+
+.venv
+venv/
