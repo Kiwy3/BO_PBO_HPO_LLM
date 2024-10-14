@@ -54,8 +54,19 @@ class LitLLM(L.LightningModule):
             print(input_ids.shape, targets.shape)
             print(loss)
             print(logits, logits.shape,"\n\n\n")
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("val_loss", loss, prog_bar=True)
         return loss
+    
+    def validation_epoch_end(self, outputs):
+        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        dist.all_reduce(avg_loss, op=dist.ReduceOp.SUM)
+        avg_loss /= dist.get_world_size()
+
+        # Log and conditionally save the model
+        self.log("avg_val_loss", avg_loss)
+        if self.trainer.is_global_zero:  # Save only on the main process
+            self.trainer.save_checkpoint("checkpoints/best_model.ckpt", weights_only=True)
+
 
 """----------------------------------Make functions to call training and evaluation------------------"""
 def train(trainer, data,HP, suffix = ""):
