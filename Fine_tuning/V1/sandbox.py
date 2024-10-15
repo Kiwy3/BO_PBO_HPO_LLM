@@ -1,7 +1,9 @@
-out = [{'val_loss': 1.8055859804153442}]
-[{'val_loss': 1.8310937881469727}]
-[{'val_loss': 1.8430469036102295}]
-[{'val_loss': 1.8417577743530273}]
+import json
+HP = {"learning_rate": 0.001, "lora_rank": 4}
+if False : 
+    with open("sample.json","w") as outfile:
+        json.dump(HP, outfile)
 
-
-print(out)
+with open("sample.json") as file:
+    data = json.load(file)
+    print(data)

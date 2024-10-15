@@ -7,6 +7,9 @@ from litgpt.data import Alpaca2k  # type: ignore
 import lightning as L  # type: ignore
 import torch.distributed as dist  # type: ignore
 
+os.environ["MASTER_ADDR"] = "127.0.0.1"
+os.environ["MASTER_PORT"] = "29500"
+
 # Model ID for loading the pre-trained model from checkpoints
 model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
@@ -203,6 +206,7 @@ def BB_eval(HP):
     tokenizer = litgpt.Tokenizer(f"checkpoints/{model_id}")
     data.connect(tokenizer, batch_size=1, max_seq_length=512)
 
+
     # Create the PyTorch Lightning Trainer with dynamic device count
     trainer = L.Trainer(
         devices=device_count,
@@ -220,6 +224,14 @@ def running():
     with open("HP_config.json") as file:
         HP = json.load(file)
     print("inside HP printing : ",HP)
+    # Check if "device_number" is specified in HP, else count available GPUs
+    device_count = HP.get("device_number", torch.cuda.device_count())
+    #Init the dist env
+    dist.init_process_group(
+        backend = "nccl",
+        rank=0,
+        world_size = device_count,
+    )
     # Run the evaluation and print the validation result
     out = BB_eval(HP)
     cleanup_distributed_environment()
