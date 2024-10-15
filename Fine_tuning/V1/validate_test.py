@@ -9,6 +9,17 @@ import torch.distributed as dist  # type: ignore
 # Model ID for loading the pre-trained model from checkpoints
 model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
+def cleanup_distributed_environment():
+    """
+    Clean up the distributed environment.
+    """
+    dist.barrier()
+    if dist.is_initialized():
+        dist.destroy_process_group()
+        print("dist env destroyed")
+    else : 
+        print("dist env not init")
+
 # Define a LightningModule for fine-tuning a GPT model with LoRA (Low-Rank Adaptation)
 class LitLLM(L.LightningModule):
     def __init__(self, low_rank=4, rate=0.002, l_alpha=16, l_dropout=0.05):
@@ -151,9 +162,27 @@ def validate(trainer, data, suffix=""):
     """
     # Load the model from the specified checkpoint
     model = LitLLM.load_from_checkpoint(f"checkpoints/finetuned{suffix}.ckpt")
-    # Run validation and return the results
-    out = trainer.validate(model, dataloaders=data, verbose=True)
-    return out
+
+    # Run validation and collect outputs
+    outputs = trainer.validate(model, dataloaders=data, verbose=True)
+
+    # Gather results across all processes
+    # Assuming 'outputs' is a list of dictionaries, we extract the validation loss
+    val_losses = [output['val_loss'] for output in outputs]
+    
+    # Create a tensor to hold the results
+    tensor_out = torch.tensor(val_losses).to("cuda")  # Move to GPU for reduction if applicable
+
+    # Reduce the results to gather them on the main process
+    dist.all_reduce(tensor_out, op=dist.ReduceOp.SUM)
+
+    # Average the results (assuming we want the average across devices)
+    avg_val_loss = tensor_out / dist.get_world_size()
+
+    # Prepare the final output dictionary
+    final_output = [{'val_loss': avg_val_loss.item(), 'avg_val_loss': avg_val_loss.item()}]
+
+    return final_output  # Return the single device output
 
 # Function to train and validate the model using given hyperparameters
 def BB_eval(HP):
@@ -186,4 +215,14 @@ def BB_eval(HP):
 HP = {"learning_rate": 0.001, "lora_rank": 4}
 # Run the evaluation and print the validation result
 out = BB_eval(HP)
-print(out)
+out_list = [out]
+cleanup_distributed_environment()
+
+# Gather output to a list
+
+
+# Ensure we print only once after cleaning up
+if dist.is_initialized() and   dist.get_rank() == 0:  # Only print if it's the main process
+    print(out_list)
+
+print("test -------- ffhfozaà")  # This will also be printed only once
