@@ -7,25 +7,10 @@ from litgpt.data import Alpaca2k  # type: ignore
 import lightning as L  # type: ignore
 import torch.distributed as dist  # type: ignore
 
-os.environ["MASTER_ADDR"] = "127.0.0.1"
-os.environ["MASTER_PORT"] = "29500"
+
 
 # Model ID for loading the pre-trained model from checkpoints
 model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-
-def cleanup_distributed_environment():
-    """
-    Clean up the distributed environment.
-    """
-    dist.barrier()
-    if dist.is_initialized():
-        dist.destroy_process_group()
-        print("dist env destroyed")
-    else : 
-        print("dist env not init")
-    
-    if dist.is_initialized():
-        print("still init")
 
 # Define a LightningModule for fine-tuning a GPT model with LoRA (Low-Rank Adaptation)
 class LitLLM(L.LightningModule):
@@ -54,6 +39,7 @@ class LitLLM(L.LightningModule):
         litgpt.lora.mark_only_lora_as_trainable(self.model)
         # Initialize an empty list to store validation step outputs
         self.validation_step_outputs = []
+        self.training_step_outputs = []
 
     def on_train_start(self):
         """
@@ -86,9 +72,26 @@ class LitLLM(L.LightningModule):
         input_ids, targets = batch["input_ids"], batch["labels"]
         # Calculate the loss for the current batch
         loss = self.compute_loss(input_ids, targets)
+        self.training_step_outputs.append(loss)
         # Log the training loss
         self.log("train_loss", loss, prog_bar=True)
         return loss
+
+    def on_train_epoch_end(self):
+        """
+        This method is called automatically at the end of each training epoch. It calculates the
+        average validation loss across all processes and logs it.
+        """
+        # Stack the losses and compute the mean
+        epoch_average = torch.stack(self.training_step_outputs).mean()
+        # Log the averaged validation loss
+        self.log("avg_train_loss", epoch_average)
+        # Clear the list to free up memory
+        #self.training_step_outputs.clear()
+
+        # Commented out to remove the effect of saving the model checkpoint
+    #     self.trainer.save_checkpoint("checkpoints/best_model.ckpt", weights_only=True)
+
 
     def validation_step(self, batch):
         """
@@ -106,23 +109,17 @@ class LitLLM(L.LightningModule):
         return loss
 
     def on_validation_epoch_end(self):
+        pass
         """
         This method is called automatically at the end of each validation epoch. It calculates the
         average validation loss across all processes and logs it.
         """
         # Stack the losses and compute the mean
         epoch_average = torch.stack(self.validation_step_outputs).mean()
-        # Perform an all-reduce operation to sum the losses across all devices
-        dist.all_reduce(epoch_average, op=dist.ReduceOp.SUM)
-        epoch_average /= dist.get_world_size()  # Average the loss across the number of devices
         # Log the averaged validation loss
         self.log("avg_val_loss", epoch_average)
         # Clear the list to free up memory
         self.validation_step_outputs.clear()
-
-        # Commented out to remove the effect of saving the model checkpoint
-        # if self.trainer.is_global_zero:
-        #     self.trainer.save_checkpoint("checkpoints/best_model.ckpt", weights_only=True)
 
     def configure_optimizers(self):
         """
@@ -158,7 +155,9 @@ def train(trainer, data, HP, suffix=""):
     # Save the trained model checkpoint
     trainer.save_checkpoint(f"checkpoints/finetuned{suffix}.ckpt", weights_only=True)
 
-# Function to handle validation
+    return model
+
+# Function to handavg_val_lossle validation
 def validate(trainer, data, suffix=""):
     """
     Validate the model using a previously saved checkpoint.
@@ -167,35 +166,26 @@ def validate(trainer, data, suffix=""):
     - data: Dataset for validation.
     - suffix: Suffix for the checkpoint file.
     """
+    rate = HP.get("learning_rate", 0.002)
+    low_rank = HP.get("lora_rank", 4)
+
     # Load the model from the specified checkpoint
+        # Initialize the model and start training
+    with trainer.init_module(empty_init=True):
+        model = LitLLM(low_rank=low_rank, rate=rate)
     model = LitLLM.load_from_checkpoint(f"checkpoints/finetuned{suffix}.ckpt")
 
     # Run validation and collect outputs
-    outputs = trainer.validate(model, dataloaders=data, verbose=True)
+    trainer.validate(model, dataloaders=data, verbose=True)
+    outputs = torch.stack(model.validation_step_outputs)
 
-    # Gather results across all processes
-    # Assuming 'outputs' is a list of dictionaries, we extract the validation loss
-    val_losses = [output['val_loss'] for output in outputs]
-    
-    # Create a tensor to hold the results
-    tensor_out = torch.tensor(val_losses).to("cuda")  # Move to GPU for reduction if applicable
+    return outputs  # Return the single device output
 
-    # Reduce the results to gather them on the main process
-    dist.all_reduce(tensor_out, op=dist.ReduceOp.SUM)
-
-    # Average the results (assuming we want the average across devices)
-    avg_val_loss = tensor_out / dist.get_world_size()
-
-    # Prepare the final output dictionary
-    final_output = [{'val_loss': avg_val_loss.item(), 'avg_val_loss': avg_val_loss.item()}]
-
-    return final_output  # Return the single device output
-
-# Function to train and validate the model using given hyperparameters
+# Function to train and validate theHP model using given hyperparameters
 def BB_eval(HP):
     """
     Evaluate the model with the given hyperparameters by training and validating.
-    Args:
+    Args:out
     - HP: Dictionary containing hyperparameters such as 'learning_rate' and 'device_number'.
     """
     # Check if "device_number" is specified in HP, else count available GPUs
@@ -209,35 +199,29 @@ def BB_eval(HP):
 
     # Create the PyTorch Lightning Trainer with dynamic device count
     trainer = L.Trainer(
-        devices=device_count,
+        #devices=device_count,
+        devices = 1,
         max_epochs=1,               # Train for 1 epoch
-        max_steps=50,               # Stop after 50 steps
+        max_steps=20,               # Stop after 50 steps
         accumulate_grad_batches=8,  # Accumulate gradients over 8 batches
         precision="bf16-true",      # Use bfloat16 precision for training
     )
-
+    # Perform Training
+    x = train(trainer,data,HP)
+    epoch_average = torch.stack(x.training_step_outputs)#.mean()
+    print(epoch_average)
     # Perform validation after training
-    return validate(trainer, data, "")
+    out = validate(trainer, data, "")
 
-def running():
-    # Hyperparameters for evaluation
-    with open("HP_config.json") as file:
-        HP = json.load(file)
-    print("inside HP printing : ",HP)
-    # Check if "device_number" is specified in HP, else count available GPUs
-    device_count = HP.get("device_number", torch.cuda.device_count())
-    #Init the dist env
-    dist.init_process_group(
-        backend = "nccl",
-        rank=0,
-        world_size = device_count,
-    )
-    # Run the evaluation and print the validation result
-    out = BB_eval(HP)
-    cleanup_distributed_environment()
     return out
 
+
+
 if __name__ == "__main__":
-    out = running()
+    HP = {
+        "learning_rate" : 0.002,
+        "lora_rank" : 4,
+    }
+    out = BB_eval(HP)
     print(out)
 
