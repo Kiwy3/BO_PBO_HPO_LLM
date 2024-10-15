@@ -1,4 +1,5 @@
 import os
+import json
 import torch  # type: ignore
 import litgpt  # type: ignore
 from litgpt.lora import GPT, merge_lora_weights  # type: ignore
@@ -19,6 +20,9 @@ def cleanup_distributed_environment():
         print("dist env destroyed")
     else : 
         print("dist env not init")
+    
+    if dist.is_initialized():
+        print("still init")
 
 # Define a LightningModule for fine-tuning a GPT model with LoRA (Low-Rank Adaptation)
 class LitLLM(L.LightningModule):
@@ -211,18 +215,17 @@ def BB_eval(HP):
     # Perform validation after training
     return validate(trainer, data, "")
 
-# Hyperparameters for evaluation
-HP = {"learning_rate": 0.001, "lora_rank": 4}
-# Run the evaluation and print the validation result
-out = BB_eval(HP)
-out_list = [out]
-cleanup_distributed_environment()
+def running():
+    # Hyperparameters for evaluation
+    with open("HP_config.json") as file:
+        HP = json.load(file)
+    print("inside HP printing : ",HP)
+    # Run the evaluation and print the validation result
+    out = BB_eval(HP)
+    cleanup_distributed_environment()
+    return out
 
-# Gather output to a list
+if __name__ == "__main__":
+    out = running()
+    print(out)
 
-
-# Ensure we print only once after cleaning up
-if dist.is_initialized() and   dist.get_rank() == 0:  # Only print if it's the main process
-    print(out_list)
-
-print("test -------- ffhfozaà")  # This will also be printed only once
