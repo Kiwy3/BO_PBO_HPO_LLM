@@ -10,16 +10,13 @@ out_list = []
 
 for i in range(3):
     print(f"iteration number {i+1} :")
-    HP["learning_rate"] = lr_list[i]
-    HP["lora_rank"] = rank[i]
+    HP["learning_rate"] = 2e-5
+    HP["lora_rank"] = 4
     print(HP)
 
     out = BB_eval(HP)
-    
-    print(out)
-    print(dir())
     out_list.append(out)
-print("-----------------------------------------------\n")
+print("-----------------------------------------------\n\n\n\n\n")
 print(out_list)
 
     
