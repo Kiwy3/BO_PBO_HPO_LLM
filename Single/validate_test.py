@@ -6,10 +6,25 @@ from litgpt.lora import GPT, merge_lora_weights
 from litgpt.data import Alpaca2k
 import lightning as L
 import torch.distributed as dist
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 import datasets
 
+import json
+from dataclasses import dataclass, field
+from typing import Optional, Union
+from pathlib import Path
+from lightning import LightningDataModule
+from litgpt import Tokenizer
+from litgpt.data import Alpaca2k, SFTDataset
+from litgpt.prompts import PromptStyle
+from datasets import load_dataset
+
+import logging
+logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
+
 model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+
+
 
 class LitLLM(L.LightningModule):
     def __init__(self, low_rank=4, rate=0.002, l_alpha=16, l_dropout=0.05,bar = True):
@@ -70,43 +85,128 @@ class LitLLM(L.LightningModule):
         self.log("val_loss", loss, prog_bar=self.bar)
         return loss
 
+
+@dataclass
+class LLMDataModule(LightningDataModule):
+    mask_prompt: bool = False
+    val_split_fraction: float = 0.05
+    prompt_style: Union[str, PromptStyle] = "alpaca"
+    ignore_index: int = -100
+    seed: int = 42
+    num_workers: int = 4
+    download_dir: Path = Path("./data/alpaca2k")
+    repo_id: str = field(repr=False, default="mhenrichsen/alpaca_2k_test")
+    file_name: str = field(repr=False, default="alpaca2k_data_cleaned_archive.json")
+
+    tokenizer: Optional[Tokenizer] = field(default=None, init=False, repr=False)
+    batch_size: int = field(default=1, init=False, repr=False)
+    max_seq_length: int = field(default=-1, init=False, repr=False)
+    train_dataset: Optional[SFTDataset] = field(default=None, init=False, repr=False)
+    val_dataset: Optional[SFTDataset] = field(default=None, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        super().__init__()
+        if isinstance(self.prompt_style, str):
+            self.prompt_style = PromptStyle.from_name(self.prompt_style)
+
+    def connect(self, tokenizer: Optional[Tokenizer] = None, batch_size: int = 1, max_seq_length: Optional[int] = None) -> None:
+        self.tokenizer = tokenizer
+        self.batch_size = batch_size
+        self.max_seq_length = -1 if max_seq_length is None else max_seq_length
+
+    def prepare_data(self) -> None:
+        # Download the dataset from Hugging Face
+        load_dataset(self.repo_id, cache_dir=self.download_dir)
+
+    def setup(self, stage: str = None) -> None:
+        # Load the dataset
+        dataset = load_dataset(self.repo_id, cache_dir=self.download_dir)
+
+        # Split the dataset into training and validation sets
+        train_validation_split = dataset["train"].train_test_split(test_size=self.val_split_fraction, seed=self.seed)
+        train_data = train_validation_split["train"]
+        val_data = train_validation_split["test"]
+
+        # Create SFTDataset instances for training and validation
+        self.train_dataset = SFTDataset(
+            data=train_data,
+            tokenizer=self.tokenizer,
+            prompt_style=self.prompt_style,
+            max_seq_length=self.max_seq_length,
+            mask_prompt=self.mask_prompt,
+            ignore_index=self.ignore_index,
+        )
+        self.val_dataset = SFTDataset(
+            data=val_data,
+            tokenizer=self.tokenizer,
+            prompt_style=self.prompt_style,
+            max_seq_length=self.max_seq_length,
+            mask_prompt=self.mask_prompt,
+            ignore_index=self.ignore_index,
+        )
+
+    def train_dataloader(self) -> DataLoader:
+        out = DataLoader(
+            self.train_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+            generator=torch.Generator().manual_seed(self.seed)
+        )
+        return out
+
+    def val_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.val_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+        )
+
 def train_validate(trainer, data, HP, suffix=""):
     rate = HP.get("learning_rate", 0.002)
     low_rank = HP.get("lora_rank", 4)
 
     with trainer.init_module(empty_init=True):
         model = LitLLM(low_rank=low_rank, rate=rate)
-    trainer.fit(model, data)
+    trainer.fit(model, datamodule = data)
     merge_lora_weights(model.model)
-    out = trainer.validate(model,data)
+    out = trainer.validate(model, datamodule = data)
 
     return out
 
 def BB_eval(HP):
-    # Data management
-    data = Alpaca2k(val_split_fraction=0.05)
-    print(data)
-    tokenizer = litgpt.Tokenizer(f"checkpoints/{model_id}")
-    data.connect(tokenizer, batch_size=1, max_seq_length=512)
-    print(data)
+
+    data_module = LLMDataModule(
+        val_split_fraction=0.05,  # Adjust as needed
+    )
+
+    # Connect the tokenizer and set batch size and max sequence length
+    data_module.connect(
+        tokenizer=litgpt.Tokenizer(f"checkpoints/TinyLlama/TinyLlama-1.1B-Chat-v1.0"),
+        batch_size=1,
+        max_seq_length=512
+    )
+
+    # Prepare and setup the data
+    data_module.prepare_data()
+    data_module.setup()
 
     # Configure Trainer
     trainer = L.Trainer(
         devices=1,
         max_epochs=1,
-        max_steps=10,
-        accumulate_grad_batches=2,
-        precision="bf16-true",
-        detect_anomaly=True,
+        #max_steps=50,
+        accumulate_grad_batches=16,
+        precision="32-true",
+        #detect_anomaly=True,
         #gradient_clip_val=1.0,  # Clip gradients at 1.0 to prevent exploding gradients
     )
 
 
     # Training
-    out = train_validate(trainer, data, HP)
-    del data
+    out = train_validate(trainer, data = data_module, HP = HP)
     #epoch_average = torch.stack(x.training_step_outputs)
-    print(locals())
     return out[0]
 
 if __name__ == "__main__":
