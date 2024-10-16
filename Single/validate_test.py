@@ -6,11 +6,13 @@ from litgpt.lora import GPT, merge_lora_weights
 from litgpt.data import Alpaca2k
 import lightning as L
 import torch.distributed as dist
+from torch.utils.data import DataLoader
+import datasets
 
 model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
 class LitLLM(L.LightningModule):
-    def __init__(self, low_rank=4, rate=0.002, l_alpha=16, l_dropout=0.05,bar = False):
+    def __init__(self, low_rank=4, rate=0.002, l_alpha=16, l_dropout=0.05,bar = True):
         super().__init__()
         # Parameters
         self.lr = rate
@@ -34,7 +36,7 @@ class LitLLM(L.LightningModule):
             print("NaN detected in input or targets")
         
         logits = self.model(input_ids)
-        logits = torch.clamp(logits, min=-10, max=10)
+        #logits = torch.clamp(logits, min=-10, max=10)
         loss = litgpt.utils.chunked_cross_entropy(logits[..., :-1, :], targets[..., 1:])
         
         if torch.isnan(loss).any():
@@ -54,10 +56,6 @@ class LitLLM(L.LightningModule):
         self.training_step_outputs.append(loss)
         self.log("train_loss", loss, prog_bar=self.bar)
         return loss
-
-    def on_train_epoch_end(self):
-        epoch_average = torch.stack(self.training_step_outputs).mean()
-        self.log("avg_train_loss", epoch_average)
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=1e-2, betas=(0.9, 0.95))
@@ -87,18 +85,20 @@ def train_validate(trainer, data, HP, suffix=""):
 def BB_eval(HP):
     # Data management
     data = Alpaca2k(val_split_fraction=0.05)
+    print(data)
     tokenizer = litgpt.Tokenizer(f"checkpoints/{model_id}")
     data.connect(tokenizer, batch_size=1, max_seq_length=512)
+    print(data)
 
     # Configure Trainer
     trainer = L.Trainer(
         devices=1,
         max_epochs=1,
-        max_steps=20,
-        accumulate_grad_batches=4,
+        max_steps=10,
+        accumulate_grad_batches=2,
         precision="bf16-true",
         detect_anomaly=True,
-        gradient_clip_val=1.0,  # Clip gradients at 1.0 to prevent exploding gradients
+        #gradient_clip_val=1.0,  # Clip gradients at 1.0 to prevent exploding gradients
     )
 
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     # Hyper Parameters
     HP = {
         "learning_rate": 0.002,
-        "lora_rank": 8,
+        "lora_rank": 4,
     }
 
     out = BB_eval(HP)
