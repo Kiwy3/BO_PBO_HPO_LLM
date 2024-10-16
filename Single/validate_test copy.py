@@ -28,20 +28,11 @@ class LitLLM(L.LightningModule):
             lora_value=True
         )
         litgpt.lora.mark_only_lora_as_trainable(self.model)
-    
+
     def compute_loss(self, input_ids, targets):
-        if torch.isnan(input_ids).any() or torch.isnan(targets).any():
-            print("NaN detected in input or targets")
-        
         logits = self.model(input_ids)
-        logits = torch.clamp(logits, min=-10, max=10)
         loss = litgpt.utils.chunked_cross_entropy(logits[..., :-1, :], targets[..., 1:])
-        
-        if torch.isnan(loss).any():
-            print("NaN detected in loss")
-        return loss
-
-
+        return loss 
 
     #------------------------------ Training ------------------------------
     def on_train_start(self):
@@ -104,7 +95,6 @@ def BB_eval(HP):
 
     # Training
     out = train_validate(trainer, data, HP)
-    del data
     #epoch_average = torch.stack(x.training_step_outputs)
     print(locals())
     return out[0]
