@@ -3,3 +3,6 @@ v-env/
 
 .venv
 venv/
+
+.data
+data/
