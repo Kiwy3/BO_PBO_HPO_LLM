@@ -201,7 +201,7 @@ def BB_eval(HP):
         precision="32-true",
         #detect_anomaly=True,
         #gradient_clip_val=1.0,  # Clip gradients at 1.0 to prevent exploding gradients
-    )1e-05,
+    ),
 
 
     # Training
