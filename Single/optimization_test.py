@@ -2,8 +2,8 @@ import json
 from validate_test import BB_eval
 
 lr_list = [0.001,0.002,0.003]
-lr_list = [1e-5, 1e-4, 5e-3]
-rank =   [4,2,8]
+lr_list = [1e-2, 1e-3, 1e-3]
+rank =   [16,8,4]
 
 HP = {}
 out_list = []

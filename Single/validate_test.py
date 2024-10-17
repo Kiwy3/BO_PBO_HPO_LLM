@@ -159,7 +159,7 @@ class LLMDataModule(LightningDataModule):
         return DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
-            shuffle=True,
+            shuffle=False,
             num_workers=self.num_workers,
         )
 
@@ -178,7 +178,7 @@ def train_validate(trainer, data, HP, suffix=""):
 def BB_eval(HP):
 
     data_module = LLMDataModule(
-        val_split_fraction=0.05,  # Adjust as needed
+        val_split_fraction=0.1,  # Adjust as needed
     )
 
     # Connect the tokenizer and set batch size and max sequence length
@@ -201,13 +201,13 @@ def BB_eval(HP):
         precision="32-true",
         #detect_anomaly=True,
         #gradient_clip_val=1.0,  # Clip gradients at 1.0 to prevent exploding gradients
-    )
+    )1e-05,
 
 
     # Training
     out = train_validate(trainer, data = data_module, HP = HP)
-    #epoch_average = torch.stack(x.training_step_outputs)
     return out[0]
+
 
 if __name__ == "__main__":
     # Hyper Parameters
