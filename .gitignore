@@ -6,3 +6,7 @@ venv/
 
 .data
 data/
+
+.debug
+debug
+debug*
