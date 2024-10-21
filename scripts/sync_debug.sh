@@ -1,0 +1,1 @@
+rsync g5k:lille/ft_poc/debug.csv ./debug.csv
