@@ -20,6 +20,9 @@ from litgpt.prompts import PromptStyle
 from datasets import load_dataset
 
 model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+import logging
+logging.getLogger("pytorch_lightning").setLevel(logging.CRITICAL)
+bar = False
 
 class LitLLM(L.LightningModule):
     def __init__(self, low_rank=4, rate=0.002, l_alpha=16, l_dropout=0.05,bar = True):
@@ -110,12 +113,9 @@ class LitLLM(L.LightningModule):
         Called at the end of each training epoch. This method is a hook
         provided by PyTorch Lightning.
 
-        This implementation simply prints a message to indicate that the
-        end of the epoch has been reached. The commented out line would
-        save the model checkpoint manually, but this is not needed with
-        PyTorch Lightning as it handles checkpointing automatically.
+        This implementation does nothing, as manual checkpoint saving is
+        not needed with PyTorch Lightning.
         """
-        print("on_train_epoch_end")
         pass  # Disable manual checkpoint saving
 
 
@@ -369,8 +369,6 @@ def BB_eval(HP):
     # Merge and compute validation loss
     merge_lora_weights(model.model)
     out = trainer.validate(model, datamodule = data_module)
-    print(sum(model.validation_step_outputs))
-    print(sum(model.validation_step_outputs)/200)
 
     validation_loss = out[0]["val_loss_avg"]
 
