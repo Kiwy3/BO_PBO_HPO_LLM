@@ -353,8 +353,8 @@ def BB_eval(HP):
     # Configure Trainer
     trainer = L.Trainer(
             devices=1,
-            max_epochs=1,
-            max_steps=20,
+            max_epochs=2,
+            #max_steps=20,
             accumulate_grad_batches=grad_batches,
             precision="32-true",
             enable_checkpointing=False,
