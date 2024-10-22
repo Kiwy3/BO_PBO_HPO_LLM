@@ -5,10 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-# NN lib
-import torch.nn as nn
-import torch.optim as optim
-from sklearn.model_selection import train_test_split 
 
 # Bayesian function
 from botorch.models import SingleTaskGP
@@ -42,12 +38,7 @@ bounds = torch.stack(
     [torch.tensor(lower_bound),
      torch.tensor(higher_bound)]
      ).to(torch.double)
-n_BO = 5
-
-# PLOT
-# plt.scatter(X[0],Y,c="red",alpha=0.5)
-# plt.xlim((lower_bound,higher_bound))
-# plt.title("Iterative bayesian optimisation")
+n_BO = 100
 
 
 """ --------------Bayesian iterations-------------------"""
@@ -79,11 +70,22 @@ for i in range(n_BO):
     X = torch.cat((X,candidate))
     Y = torch.cat((Y,Y_candidate))
 
-    # Plot the new point
-    # plt.scatter(candidate,val_loss,c="black",alpha=0.8)
-    # plt.text(candidate,val_loss+0.02,str(i))
 
 # Print the current state of X and Y, and save the plot as "Single_BO.png"
 print(X, Y)
-#plt.savefig("Single_BO.png")
+def tensor_csv(data,name):
+    """
+    Save a tensor as a CSV file.
+
+    Args:
+        data (Tensor): The tensor to save.
+        name (str): The name of the CSV file to save the tensor as.
+    """
+    import pandas as pd
+    data = data.numpy()
+    df = pd.DataFrame(data)
+    df.to_csv(f"{name}.csv")
+
+tensor_csv(X,"X")
+tensor_csv(Y,"Y")
 
