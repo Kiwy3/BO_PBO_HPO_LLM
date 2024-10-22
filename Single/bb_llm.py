@@ -337,6 +337,12 @@ def BB_eval(HP):
     grad_batches = HP.get("grad_batches", 16)
     rate = HP.get("learning_rate", 0.002)
     low_rank = HP.get("lora_rank", 4)
+    fast_run = HP.get("fast_run", False)
+
+    if fast_run :
+        max_steps = 20
+    else:
+        max_steps = None
 
     # Data module management
     data_module = LLMDataModule(
@@ -354,7 +360,7 @@ def BB_eval(HP):
     trainer = L.Trainer(
             devices=1,
             max_epochs=2,
-            #max_steps=20,
+            max_steps=max_steps,
             accumulate_grad_batches=grad_batches,
             precision="32-true",
             enable_checkpointing=False,
