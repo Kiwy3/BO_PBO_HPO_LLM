@@ -337,12 +337,12 @@ def BB_eval(HP):
     grad_batches = HP.get("grad_batches", 16)
     rate = HP.get("learning_rate", 0.002)
     low_rank = HP.get("lora_rank", 4)
-    fast_run = HP.get("fast_run", False)
+    fast_run = HP.get("fast_run", True)
 
     if fast_run :
         max_steps = 20
     else:
-        max_steps = None
+        max_steps = 2000
 
     # Data module management
     data_module = LLMDataModule(
