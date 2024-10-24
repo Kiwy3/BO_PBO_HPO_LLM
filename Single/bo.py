@@ -38,7 +38,7 @@ bounds = torch.stack(
     [torch.tensor(lower_bound),
      torch.tensor(higher_bound)]
      ).to(torch.double)
-n_BO = 100
+n_BO = 10
 
 
 """ --------------Bayesian iterations-------------------"""
@@ -63,6 +63,7 @@ for i in range(n_BO):
     # Compute the new evaluation
     HP["learning_rate"] = math.exp(candidate[0][0].item())
     HP["lora_rank"] = round(candidate[0][1].item())
+    HP["fast_run"] = False
     val_loss = BB_eval(HP)
 
     # Append new data
