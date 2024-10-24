@@ -1,22 +1,21 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+import torch.distributed as dist
+import torch.multiprocessing as mp
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DataLoader, DistributedSampler
 from litgpt.lora import GPT, merge_lora_weights
-from litgpt.data import Alpaca2k, SFTDataset
+from litgpt.data import SFTDataset
 import litgpt
 from datasets import load_dataset
+import os
 
-model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"  # Define the model ID
-
-
-# Model definition (equivalent to LitLLM)
-
+model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
 class LLMModel(nn.Module):
     def __init__(self, low_rank=4, rate=0.002, l_alpha=16, l_dropout=0.05):
         super(LLMModel, self).__init__()
-        # Lora Model
         self.model = GPT.from_name(
             name="tiny-llama-1.1b",
             lora_r=low_rank,
@@ -32,19 +31,16 @@ class LLMModel(nn.Module):
         return self.model(input_ids)
 
     def load_weights(self, checkpoint_path):
-        """Load pre-trained model weights"""
-        state_dict = torch.load(checkpoint_path, map_location="cpu")  # Load the checkpoint
-        self.model.load_state_dict(state_dict, strict=False)  # Load weights into the model
+        state_dict = torch.load(checkpoint_path, map_location="cuda")
+        self.model.load_state_dict(state_dict, strict=False)
 
 
-# Function to compute loss
 def compute_loss(model, input_ids, targets):
     logits = model(input_ids)
     loss = litgpt.utils.chunked_cross_entropy(logits[..., :-1, :], targets[..., 1:])
     return loss
 
 
-# Training function
 def train(model, dataloader, optimizer, device):
     model.train()
     total_loss = 0
@@ -58,7 +54,6 @@ def train(model, dataloader, optimizer, device):
     return total_loss / len(dataloader)
 
 
-# Validation function
 def validate(model, dataloader, device):
     model.eval()
     total_loss = 0
@@ -70,7 +65,6 @@ def validate(model, dataloader, device):
     return total_loss / len(dataloader)
 
 
-# Data setup (similar to LLMDataModule in original code)
 class LLMData:
     def __init__(self, repo_id, val_split_fraction=0.05, batch_size=1, max_seq_length=512, num_workers=4):
         self.repo_id = repo_id
@@ -99,14 +93,30 @@ class LLMData:
             prompt_style="alpaca"
         )
 
-    def get_dataloaders(self):
-        train_loader = DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
-        val_loader = DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
+    def get_dataloaders(self, world_size, rank):
+        train_sampler = DistributedSampler(self.train_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+        val_sampler = DistributedSampler(self.val_dataset, num_replicas=world_size, rank=rank, shuffle=False)
+
+        train_loader = DataLoader(self.train_dataset, batch_size=self.batch_size, sampler=train_sampler, num_workers=self.num_workers)
+        val_loader = DataLoader(self.val_dataset, batch_size=self.batch_size, sampler=val_sampler, num_workers=self.num_workers)
         return train_loader, val_loader
 
 
-# Distributed Evaluation
-def dist_eval(hyperparameters):
+def setup_distributed(rank, world_size):
+    """ Initialize distributed environment """
+    os.environ['MASTER_ADDR'] = 'localhost'  # Address of the master process
+    os.environ['MASTER_PORT'] = '12355'      # Free port for communication
+    dist.init_process_group(backend='nccl', rank=rank, world_size=world_size)
+    torch.cuda.set_device(rank)
+    return rank
+
+
+def cleanup():
+    """Clean up distributed process group"""
+    dist.destroy_process_group()
+
+
+def dist_eval(rank, world_size, hyperparameters):
     grad_batches = hyperparameters.get("grad_batches", 16)
     rate = hyperparameters.get("learning_rate", 0.002)
     low_rank = hyperparameters.get("lora_rank", 4)
@@ -114,20 +124,23 @@ def dist_eval(hyperparameters):
     max_steps = 20 if fast_run else 2000
     n_epochs = hyperparameters.get("n_epochs", 1)
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # Setup distributed
+    local_rank = setup_distributed(rank, world_size)
+    device = torch.device(f"cuda:{local_rank}")
 
     # Setup data
-    data_module = LLMData(repo_id="mhenrichsen/alpaca_2k_test", val_split_fraction=0.2,batch_size=1)
+    data_module = LLMData(repo_id="mhenrichsen/alpaca_2k_test", val_split_fraction=0.2)
     data_module.prepare_data()
-    train_loader, val_loader = data_module.get_dataloaders()
+    train_loader, val_loader = data_module.get_dataloaders(world_size, local_rank)
 
     # Initialize model and optimizer
     model = LLMModel(low_rank=low_rank, rate=rate).to(device)
+    model = DDP(model, device_ids=[local_rank])
 
     # Load pre-trained weights
     checkpoint_path = f"checkpoints/{model_id}/lit_model.pth"
-    model.load_weights(checkpoint_path)
-    print("Model weights loaded from", checkpoint_path)
+    model.module.load_weights(checkpoint_path)
+    print(f"Rank {local_rank}, Model weights loaded from {checkpoint_path}")
 
     optimizer = optim.AdamW(model.parameters(), lr=rate, weight_decay=1e-2, betas=(0.9, 0.95))
 
@@ -135,22 +148,37 @@ def dist_eval(hyperparameters):
     for epoch in range(n_epochs):
         print(f"Epoch {epoch + 1}")
         train_loss = train(model, train_loader, optimizer, device)
-        print(f"Train Loss: {train_loss}")
+        print(f"Rank {local_rank}, Train Loss: {train_loss}")
 
         # Validation after each epoch
         val_loss = validate(model, val_loader, device)
-        print(f"Validation Loss: {val_loss}")
+        print(f"Rank {local_rank}, Validation Loss: {val_loss}")
 
-    # Merge LoRA weights and return validation loss
-    merge_lora_weights(model.model)
+    # Merge LoRA weights (after DDP cleanup)
+    if local_rank == 0:
+        merge_lora_weights(model.module.model)
+
+    cleanup()
     return val_loss
 
 
-if __name__ == "__main__":
+def main_worker(rank, world_size, hyperparameters):
+    dist_eval(rank, world_size, hyperparameters)
+
+
+def main():
+    world_size = torch.cuda.device_count()  # Number of available GPUs
+
     # Hyper Parameters
     HP = {
         "learning_rate": 0.002,
         "lora_rank": 4,
     }
-    validation_loss = dist_eval(HP)
-    print(f"Final Validation Loss: {validation_loss}")
+
+    # Start a process for each GPU
+    mp.spawn(main_worker, args=(world_size, HP), nprocs=world_size, join=True)
+
+
+if __name__ == "__main__":
+    main()
+    print("test")
