@@ -7,7 +7,12 @@ from litgpt.data import Alpaca2k, SFTDataset
 import litgpt
 from datasets import load_dataset
 
+model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"  # Define the model ID
+
+
 # Model definition (equivalent to LitLLM)
+
+
 class LLMModel(nn.Module):
     def __init__(self, low_rank=4, rate=0.002, l_alpha=16, l_dropout=0.05):
         super(LLMModel, self).__init__()
@@ -26,11 +31,18 @@ class LLMModel(nn.Module):
     def forward(self, input_ids):
         return self.model(input_ids)
 
+    def load_weights(self, checkpoint_path):
+        """Load pre-trained model weights"""
+        state_dict = torch.load(checkpoint_path, map_location="cpu")  # Load the checkpoint
+        self.model.load_state_dict(state_dict, strict=False)  # Load weights into the model
+
+
 # Function to compute loss
 def compute_loss(model, input_ids, targets):
     logits = model(input_ids)
     loss = litgpt.utils.chunked_cross_entropy(logits[..., :-1, :], targets[..., 1:])
     return loss
+
 
 # Training function
 def train(model, dataloader, optimizer, device):
@@ -45,6 +57,7 @@ def train(model, dataloader, optimizer, device):
         total_loss += loss.item()
     return total_loss / len(dataloader)
 
+
 # Validation function
 def validate(model, dataloader, device):
     model.eval()
@@ -55,6 +68,7 @@ def validate(model, dataloader, device):
             loss = compute_loss(model, input_ids, targets)
             total_loss += loss.item()
     return total_loss / len(dataloader)
+
 
 # Data setup (similar to LLMDataModule in original code)
 class LLMData:
@@ -76,19 +90,20 @@ class LLMData:
             data=train_data,
             tokenizer=self.tokenizer,
             max_seq_length=self.max_seq_length,
-            prompt_style = "alpaca"
+            prompt_style="alpaca"
         )
         self.val_dataset = SFTDataset(
             data=val_data,
             tokenizer=self.tokenizer,
             max_seq_length=self.max_seq_length,
-            prompt_style = "alpaca"
+            prompt_style="alpaca"
         )
 
     def get_dataloaders(self):
         train_loader = DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
         val_loader = DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
         return train_loader, val_loader
+
 
 # Distributed Evaluation
 def dist_eval(hyperparameters):
@@ -97,20 +112,27 @@ def dist_eval(hyperparameters):
     low_rank = hyperparameters.get("lora_rank", 4)
     fast_run = hyperparameters.get("fast_run", True)
     max_steps = 20 if fast_run else 2000
+    n_epochs = hyperparameters.get("n_epochs", 1)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Setup data
-    data_module = LLMData(repo_id="mhenrichsen/alpaca_2k_test", val_split_fraction=0.2)
+    data_module = LLMData(repo_id="mhenrichsen/alpaca_2k_test", val_split_fraction=0.2,batch_size=1)
     data_module.prepare_data()
     train_loader, val_loader = data_module.get_dataloaders()
 
     # Initialize model and optimizer
     model = LLMModel(low_rank=low_rank, rate=rate).to(device)
+
+    # Load pre-trained weights
+    checkpoint_path = f"checkpoints/{model_id}/lit_model.pth"
+    model.load_weights(checkpoint_path)
+    print("Model weights loaded from", checkpoint_path)
+
     optimizer = optim.AdamW(model.parameters(), lr=rate, weight_decay=1e-2, betas=(0.9, 0.95))
 
     # Training loop
-    for epoch in range(2):
+    for epoch in range(n_epochs):
         print(f"Epoch {epoch + 1}")
         train_loss = train(model, train_loader, optimizer, device)
         print(f"Train Loss: {train_loss}")
@@ -122,6 +144,7 @@ def dist_eval(hyperparameters):
     # Merge LoRA weights and return validation loss
     merge_lora_weights(model.model)
     return val_loss
+
 
 if __name__ == "__main__":
     # Hyper Parameters
