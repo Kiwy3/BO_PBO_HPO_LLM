@@ -16,7 +16,8 @@ from litgpt.utils import check_valid_checkpoint_dir, extend_checkpoint_dir
 def custom_merge_lora(
     checkpoint_dir: Path,
     pretrained_checkpoint_dir: Optional[Path] = None,
-    precision: Optional[str] = None
+    precision: Optional[str] = "bf16",
+    model = None
 ) -> None:
     """Merges the LoRA weights with the base model.
 
@@ -43,22 +44,21 @@ def custom_merge_lora(
     check_valid_checkpoint_dir(checkpoint_dir, model_filename="lit_model.pth.lora")
     if pretrained_checkpoint_dir is not None:
         check_valid_checkpoint_dir(pretrained_checkpoint_dir)
-    if (checkpoint_dir / "lit_model.pth").is_file():
+    """ if (checkpoint_dir / "lit_model.pth").is_file():
         print("LoRA weights have already been merged in this checkpoint.")
-        return
+        return """
 
     lora_params, meta_pretrained_checkpoint_dir, lora_precision = load_lora_metadata(checkpoint_dir)
-    precision = precision if precision is not None else lora_precision
 
     if pretrained_checkpoint_dir is None:
         pretrained_checkpoint_dir = meta_pretrained_checkpoint_dir
         pretrained_checkpoint_dir = extend_checkpoint_dir(pretrained_checkpoint_dir)
 
     fabric = L.Fabric(devices=1, precision=precision, accelerator="cpu")
-    config = Config.from_file(checkpoint_dir / "model_config.yaml", **lora_params)
+    #config = Config.from_file(checkpoint_dir / "model_config.yaml", **lora_params)
 
     with fabric.init_module(), torch.device("meta"):
-        model = GPT(config)
+        model = GPT(model.config)
         # we don't care about these to perform merging
         model.cos = None
         model.sin = None
@@ -78,7 +78,7 @@ def custom_merge_lora(
 
     # Remove LoRA parameters and the LoRA linear substring
     state_dict = {k.replace("linear.", ""): v for k, v in model.state_dict().items() if not lora_filter(k, v)}
-    save_path = checkpoint_dir / "lit_model.pth"
+    save_path = checkpoint_dir / "lit_merge_model.pth"
     torch.save(state_dict, save_path)
 
     fabric.print(f"Saved merged weights to {str(checkpoint_dir / 'lit_model.pth')!r}")
