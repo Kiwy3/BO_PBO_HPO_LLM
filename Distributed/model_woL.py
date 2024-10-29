@@ -41,17 +41,21 @@ def compute_loss(model, input_ids, targets):
     return loss
 
 
-def train(model, dataloader, optimizer, device):
+def train(model, dataloader, optimizer, device, max_steps=-1):
     model.train()
     total_loss = 0
+    steps = 0
     for batch in dataloader:
+        steps += 1
         input_ids, targets = batch["input_ids"].to(device), batch["labels"].to(device)
         optimizer.zero_grad()
         loss = compute_loss(model, input_ids, targets)
         loss.backward()
         optimizer.step()
         total_loss += loss.item()
-    return total_loss / len(dataloader)
+        if steps == max_steps:
+            return total_loss /steps, False
+    return total_loss / len(dataloader), True
 
 
 def validate(model, dataloader, device):
@@ -145,10 +149,12 @@ def dist_eval(rank, world_size, hyperparameters):
     optimizer = optim.AdamW(model.parameters(), lr=rate, weight_decay=1e-2, betas=(0.9, 0.95))
 
     # Training loop
+    bool_steps = True
     for epoch in range(n_epochs):
         print(f"Epoch {epoch + 1}")
-        train_loss = train(model, train_loader, optimizer, device)
-        print(f"Rank {local_rank}, Train Loss: {train_loss}")
+        if bool_steps:
+            train_loss, bool_steps = train(model, train_loader, optimizer, device, max_steps)
+            print(f"Rank {local_rank}, Train Loss: {train_loss}")
 
         # Validation after each epoch
         val_loss = validate(model, val_loader, device)
@@ -163,7 +169,7 @@ def dist_eval(rank, world_size, hyperparameters):
 
 
 def main_worker(rank, world_size, hyperparameters):
-    dist_eval(rank, world_size, hyperparameters)
+    return dist_eval(rank, world_size, hyperparameters)
 
 
 def main():
@@ -176,8 +182,8 @@ def main():
     }
 
     # Start a process for each GPU
-    mp.spawn(main_worker, args=(world_size, HP), nprocs=world_size, join=True)
-
+    a = mp.spawn(main_worker, args=(world_size, HP), nprocs=world_size, join=True)
+    print(a)
 
 if __name__ == "__main__":
     main()
