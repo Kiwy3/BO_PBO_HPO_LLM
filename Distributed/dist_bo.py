@@ -31,6 +31,7 @@ def bayesian_optimization(n_BO):
     X = torch.tensor([[-1,4]],dtype=torch.double)
     HP["learning_rate"] = math.exp(X[0][0])
     HP["lora_rank"] = round(X[0][1].item())
+    HP["fast_run"] = False
     val_loss = Dist_eval(HP)
     Y = torch.tensor([[val_loss]],dtype=torch.double)
 
@@ -69,6 +70,7 @@ def bayesian_optimization(n_BO):
         HP["lora_rank"] = round(candidate[0][1].item())
         HP["fast_run"] = False
         val_loss = Dist_eval(HP)
+        print(val_loss)
 
         # Append new data
         Y_candidate = torch.tensor([[val_loss]],dtype=torch.double)
@@ -76,7 +78,8 @@ def bayesian_optimization(n_BO):
         Y = torch.cat((Y,Y_candidate))
         
     return X, Y
-def tensor_csv(data,name):
+
+def tensor_csv(data, res,name):
     """
     Save a tensor as a CSV file.
 
@@ -88,13 +91,14 @@ def tensor_csv(data,name):
 
     import pandas as pd
     data = data.numpy()
+    col_name = ["log10(rate),lora_rank"]
     df = pd.DataFrame(data)
+    df["result"] = res
     df.to_csv(f"{name}.csv")
 
 if __name__ == "__main__":
-    X, Y = bayesian_optimization(2)
+    X, Y = bayesian_optimization(5)
     # Print the current state of X and Y, and save the plot as "Single_BO.png"
     print(X, Y)
-    tensor_csv(X,"X")
-    tensor_csv(Y,"Y")
+    tensor_csv(X,Y,"dist_bo")
 
