@@ -68,7 +68,6 @@ def copy_weights_llama(
         raise NotImplementedError
     
     for name, param in lit_weights.items():
-        print(name)
         if name == "lm_head.weight" and untie_weights:
             continue
         if name.endswith(".attn.attn.weight"):
@@ -121,8 +120,8 @@ def convert_checkpoint(checkpoint_dir: Path, output_dir: Path) -> None:
     # initialize a new empty state dict to hold our new weights
     sd = {}
     with incremental_save(output_path) as saver:
-        lit_weights = lazy_load(checkpoint_dir / "lit_model.pth.lora")
-        lit_weights = lit_weights.get("state_dict", lit_weights)
+        lit_weights = lazy_load(checkpoint_dir / "lit_model.pth")
+        #lit_weights = lit_weights.get("state_dict", lit_weights)
         lit_weights = lit_weights.get("model", lit_weights)
         check_conversion_supported(lit_weights)
         copy_fn(sd, lit_weights, saver=saver)
