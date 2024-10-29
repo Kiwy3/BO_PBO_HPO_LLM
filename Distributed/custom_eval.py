@@ -102,7 +102,7 @@ def convert_and_evaluate(
         # So we're `torch.load`-ing and `torch.sav`-ing it again to work around this.
         state_dict = torch.load(out_dir / "model.pth")
         torch.save(state_dict, model_path)
-        #os.remove(out_dir / "model.pth")
+        os.remove(out_dir / "model.pth")
 
     from lm_eval.models.huggingface import HFLM
 
@@ -121,4 +121,11 @@ def convert_and_evaluate(
         numpy_random_seed=seed,
         torch_random_seed=seed,
     )
-    return results["results"]["mmlu"]["acc,none"]
+
+    prepare_results(
+        results=results,
+        save_filepath=save_filepath,
+        print_results=True,
+        save_results=False,
+    )
+    return results["results"]
