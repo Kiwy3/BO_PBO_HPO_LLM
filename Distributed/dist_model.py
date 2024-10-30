@@ -63,7 +63,7 @@ class LitLLM(L.LightningModule):
             lora_alpha=l_alpha,
             lora_dropout=l_dropout,
             lora_query=True,
-            lora_key=False,
+            lora_key=True,
             lora_value=True
         )
         litgpt.lora.mark_only_lora_as_trainable(self.model)
@@ -367,12 +367,10 @@ def Dist_eval(HP):
     grad_batches = HP.get("grad_batches", 16)
     rate = HP.get("learning_rate", 0.002)
     low_rank = HP.get("lora_rank", 4)
-    fast_run = HP.get("fast_run", True)
     lora_dropout = HP.get("lora_dropout", 0.05)
     lora_alpha = HP.get("lora_alpha", 16)
     weight_decay = HP.get("weight_decay", 1e-2)
-
-    max_steps = 20 if fast_run else 200
+    max_steps = 20 if HP.get("fast_run", True) else 200
 
 
 
@@ -400,9 +398,7 @@ def Dist_eval(HP):
             enable_checkpointing=False,
         )
     
-
     # Generate and train the model
-    
     model = LitLLM(
         low_rank=low_rank, 
         rate=rate,
@@ -411,37 +407,99 @@ def Dist_eval(HP):
         weight_decay = weight_decay,
         name=model_dict[model_id],        
         ).to(device)
-    print(model.device)
     trainer.fit(model, datamodule = data_module)
 
-    # Merge and compute validation loss
+
+    #Look at the model
+    
+
+    # Saving unmerged model
+    lora_path = "checkpoints/lora"
+    print("Saving before LoRA")
+    """ torch.save({k.replace("linear.", ""): v for k, v in model.model.state_dict().items() if not lora_filter(k, v)}
+               , Path(lora_path) / "lit_model_unmerged.pth") """
+    torch.save({k : v for k, v in model.model.state_dict().items()}
+        , Path(lora_path) / "lit_model_full.pth"
+    )
+
+    # Merge
     print("Merging Lora Weights")
     #merge_lora_weights(model.model)
-    lora_path = "checkpoints/lora"
-    trainer.save_checkpoint(lora_path+"/lit_model.pth.lora", weights_only=True)
-    print("Merging Lora Model")
-    custom_merge_lora(Path(lora_path))
-    print("Saving Checkpoint")
+
+    #Manual merging
+    for module in model.model.modules():
+        if isinstance(module, LoRALinear):
+            module.merge()
+
+
+    # Saving merged model
+    print("merging model")
+    state_dict = {k.replace("linear.", ""): v for k, v in model.model.state_dict().items() if not lora_filter(k, v)}
     
+    #print(state_dict.keys())
+    save_path = Path(lora_path) / "lit_model.pth"
+    torch.save(state_dict, save_path)
+
+    torch.save({k : v for k, v in model.model.state_dict().items()}
+        , Path(lora_path) / "lit_model_full_merged.pth"
+    )
+    
+    # Saving model
+    idx = HP.get("idx","")
+    torch.save(state_dict,Path("checkpoints/lora") / f"lit_model_{idx}.pth")
+
     del model
     torch.cuda.empty_cache()
-    #torch.save(model.model.state_dict, "checkpoints/"+model_id+"/lit_model.pth")
+
+
+
     # Evaluate the model
-    out = custom_evaluate("checkpoints/"+model_id,
+    """ print("Evaluating model")
+    out = custom_evaluate(lora_path,
                           tasks="mmlu",
                           limit=50,
                           force_conversion=True,
-                          out_dir="eval/")
+                          out_dir="eval/") """
 
-    return out
+    return idx
 
 if __name__ == "__main__":
+    l = []
+    print("\n\n\n ITERATION 1 :")
     # Hyper Parameters
     HP = {
-        "learning_rate": 10,
-        "lora_rank": 4,
-        "fast_run": True
+        "learning_rate": 1,
+        "lora_rank": 5,
+        "lora_alpha": 2,
+        "fast_run": False,
+        "idx": 1
     }
     out = Dist_eval(HP)
-    print("final output : ",out)
+    #l.append(out["mmlu"]["acc,none"])
+
+    """ print("\n\n\n ITERATION 2 :")
+    # Hyper Parameters
+    HP = {
+        "learning_rate": 1,
+        "lora_rank": 128,
+        "lora_alpha": 28,
+        "fast_run": True,
+        "idx": 2
+    }
+    out = Dist_eval(HP)
+    #l.append(out["mmlu"]["acc,none"])
+
+    print("\n\n\n ITERATION 3 :")
+    # Hyper Parameters
+    HP = {
+        "learning_rate": 0.0001,
+        "lora_rank": 64,
+        "lora_alpha": 2,
+        "fast_run": True,
+        "idx": 3
+    }
+    out = Dist_eval(HP) """
+    #l.append(out["mmlu"]["acc,none"])
+
+    print(l)
     print("this is the end")
