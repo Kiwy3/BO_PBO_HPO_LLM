@@ -1,29 +1,32 @@
-import sys
-import json
-import torch
-import litgpt
-from litgpt.lora import GPT, merge_lora_weights
-from litgpt.data import Alpaca2k
-import lightning as L
-import torch.distributed as dist
-from torch.utils.data import DataLoader, random_split
-import numpy as np
-import json
+# Classical libraries
+import os
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional, Union
-from pathlib import Path
-from lightning import LightningDataModule
-from litgpt import Tokenizer
-from litgpt.data import Alpaca2k, SFTDataset
-from litgpt.prompts import PromptStyle
-from datasets import load_dataset
-from torch.multiprocessing import SpawnContext 
-from lm_eval import evaluator
-from litgpt.scripts.merge_lora import merge_lora
 
-from litgpt.eval.evaluate import convert_and_evaluate as evaluate #type: ignore
+# Torch libraries
+import torch
+from torch.utils.data import DataLoader
+import lightning as L
+from lightning import LightningDataModule
+
+# litGPT libraries
+import litgpt
+from litgpt import Tokenizer
+#from litgpt.lora import GPT, LoRALinear, lora_filter
+from litgpt.data import SFTDataset
+from litgpt.prompts import PromptStyle
+
+# HF based libraries
+from datasets import load_dataset
+from lm_eval import evaluator
+
+# Custom libraries
 from custom_eval import convert_and_evaluate as custom_evaluate
 from custom_merging import custom_merge_lora
+from custom_lora import GPT, LoRALinear, lora_filter
+
+
 
 model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 model_dict = {
