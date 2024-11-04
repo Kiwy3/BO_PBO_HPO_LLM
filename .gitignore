@@ -12,3 +12,6 @@ debug
 debug*
 
 __*/
+
+
+*.ipynb
