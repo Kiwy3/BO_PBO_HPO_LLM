@@ -134,7 +134,8 @@ class LoRALinear(LoRALayer):
             # initialize A the same way as the default for nn.Linear and B to zero
             # Wondering why 'a' is equal to math.sqrt(5)?: https://github.com/pytorch/pytorch/issues/15314
             nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
-            nn.init.zeros_(self.lora_B)
+            #nn.init.zeros_(self.lora_B)
+            nn.init.kaiming_uniform_(self.lora_B, a=math.sqrt(5))
 
     def get_lora_AB(self) -> torch.Tensor:
         """Return merged lora_A and lora_B matrices with the same shape as the pretrained weights."""
