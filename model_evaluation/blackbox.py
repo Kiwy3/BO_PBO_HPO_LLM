@@ -30,9 +30,6 @@ def evaluate(HP):
     """
 
     model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-    model_name = model_dict.get(model_id, "tiny-llama-1.1b")
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Hyper Parameters loading
     grad_batches = HP.get("grad_batches", 16)
     rate = HP.get("learning_rate", 0.002)
