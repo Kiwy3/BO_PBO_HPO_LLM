@@ -24,7 +24,7 @@ from lm_eval import evaluator
 # Custom libraries
 from custom_eval import convert_and_evaluate as custom_evaluate
 from custom_merging import custom_merge_lora
-from custom_lora import GPT, LoRALinear, lora_filter
+from custom_lora import GPT, LoRALinear, lora_filter, merge_lora_weights
 
 
 
@@ -56,6 +56,7 @@ class LitLLM(L.LightningModule):
         self.bar = bar
         self.weight_decay = weight_decay
         self.validation_step_outputs = []
+        self.old_lora_A = []
         # Lora Model
         self.model = GPT.from_name(
             name=name,
@@ -93,6 +94,26 @@ class LitLLM(L.LightningModule):
 
         return loss
 
+    def check_lora_b_zeros(self):
+        name = self.model.state_dict().keys()
+        for n in name:
+            if "lora_B" in n:
+                if torch.count_nonzero(self.model.state_dict()[n]) == 0:
+                    #print(f"lora_b {n} is all zero")
+                    pass
+                else:
+                    print(f"lora_b {n} is not all zero")
+
+    def compare_lora_A(self):
+        old = self.old_lora_A.copy()
+        for n, p in self.model.named_parameters():
+            if "lora_A" in n:
+                self.old_lora_A.append(p)
+
+        if old == self.old_lora_A:
+            print("lora_A is same")
+        else:
+            print("lora_A is not same")
 
     #------------------------------ Training ------------------------------
     def on_train_start(self):
@@ -107,6 +128,12 @@ class LitLLM(L.LightningModule):
         state_dict = torch.load(f"checkpoints/{model_id}/lit_model.pth", mmap=True, weights_only=False)
         self.model.load_state_dict(state_dict, strict=False)
 
+        for n, p in self.model.named_parameters():
+            if "lora_A" in n:
+                self.old_lora_A.append(p)
+
+        
+
     def training_step(self, batch):
         """
         Define the training loop's step. This method is called on each batch.
@@ -120,8 +147,10 @@ class LitLLM(L.LightningModule):
         input_ids, targets = batch["input_ids"], batch["labels"]
         loss = self.compute_loss(input_ids, targets)
         self.log("train_loss", loss, prog_bar=self.bar)
+        #self.check_lora_b_zeros()
         return loss
     
+
     def on_train_epoch_end(self):
         """
         Called at the end of each training epoch. This method is a hook
@@ -370,7 +399,7 @@ def Dist_eval(HP):
     lora_dropout = HP.get("lora_dropout", 0.05)
     lora_alpha = HP.get("lora_alpha", 16)
     weight_decay = HP.get("weight_decay", 1e-2)
-    max_steps = 20 if HP.get("fast_run", True) else 200
+    max_steps = 20 if HP.get("fast_run", True) else 2000
 
 
 
@@ -424,12 +453,7 @@ def Dist_eval(HP):
 
     # Merge
     print("Merging Lora Weights")
-    #merge_lora_weights(model.model)
-
-    #Manual merging
-    for module in model.model.modules():
-        if isinstance(module, LoRALinear):
-            module.merge()
+    merge_lora_weights(model.model)
 
 
     # Saving merged model
@@ -454,40 +478,41 @@ def Dist_eval(HP):
 
 
     # Evaluate the model
-    """ print("Evaluating model")
+    print("Evaluating model")
     out = custom_evaluate(lora_path,
                           tasks="mmlu",
                           limit=50,
                           force_conversion=True,
-                          out_dir="eval/") """
+                          out_dir="eval/")
 
-    return idx
+    return out["mmlu"]["acc,none"]
 
 if __name__ == "__main__":
     l = []
+    fast_run = False
     print("\n\n\n ITERATION 1 :")
     # Hyper Parameters
     HP = {
         "learning_rate": 1,
         "lora_rank": 5,
         "lora_alpha": 2,
-        "fast_run": False,
+        "fast_run": fast_run,
         "idx": 1
     }
     out = Dist_eval(HP)
-    #l.append(out["mmlu"]["acc,none"])
+    l.append(out["mmlu"]["acc,none"])
 
-    """ print("\n\n\n ITERATION 2 :")
+    print("\n\n\n ITERATION 2 :")
     # Hyper Parameters
     HP = {
         "learning_rate": 1,
         "lora_rank": 128,
         "lora_alpha": 28,
-        "fast_run": True,
+        "fast_run": fast_run,
         "idx": 2
     }
     out = Dist_eval(HP)
-    #l.append(out["mmlu"]["acc,none"])
+    l.append(out["mmlu"]["acc,none"])
 
     print("\n\n\n ITERATION 3 :")
     # Hyper Parameters
@@ -495,11 +520,11 @@ if __name__ == "__main__":
         "learning_rate": 0.0001,
         "lora_rank": 64,
         "lora_alpha": 2,
-        "fast_run": True,
+        "fast_run": fast_run,
         "idx": 3
     }
-    out = Dist_eval(HP) """
-    #l.append(out["mmlu"]["acc,none"])
+    out = Dist_eval(HP)
+    l.append(out["mmlu"]["acc,none"])
 
     print(l)
     print("this is the end")
