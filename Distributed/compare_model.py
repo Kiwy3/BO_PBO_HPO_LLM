@@ -4,7 +4,7 @@ from pathlib import Path
 
 idx_list = [1,2,3]
 name_list = [f"lit_model_{i}.pth" for i in idx_list]
-name_list = ["lit_model.pth", "lit_model_unmerged.pth"]
+#name_list = ["lit_model.pth", "lit_model_unmerged.pth"]
 #name_list = ["lit_model_full.pth"]
 name_list = ["lit_model_full_merged.pth", "lit_model_full.pth"]
 checkpoint_dir = Path("checkpoints/lora")
