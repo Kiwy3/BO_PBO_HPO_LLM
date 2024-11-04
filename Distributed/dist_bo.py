@@ -97,7 +97,7 @@ def tensor_csv(data, res,name):
     df.to_csv(f"{name}.csv")
 
 if __name__ == "__main__":
-    X, Y = bayesian_optimization(5)
+    X, Y = bayesian_optimization(50)
     # Print the current state of X and Y, and save the plot as "Single_BO.png"
     print(X, Y)
     tensor_csv(X,Y,"dist_bo")
