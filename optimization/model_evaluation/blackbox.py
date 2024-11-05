@@ -4,9 +4,9 @@ import litgpt
 from pathlib import Path
 
 # Import Custom libraries
-from .model_full import LLM_model, merge_lora_weights, lora_filter
-from .data import LLMDataModule
-from .eval import evaluate
+from model_evaluation.model_full import LLM_model, merge_lora_weights, lora_filter
+from model_evaluation.data import LLMDataModule
+from model_evaluation.eval import evaluate
 
 
 model_dict = {

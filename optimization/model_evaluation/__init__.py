@@ -1,1 +1,1 @@
-from .blackbox import evaluate
+from model_evaluation.blackbox import evaluate
