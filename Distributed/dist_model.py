@@ -481,7 +481,7 @@ def Dist_eval(HP):
     print("Evaluating model")
     out = custom_evaluate(lora_path,
                           tasks="mmlu",
-                          limit=50,
+                          #limit=50,
                           force_conversion=True,
                           out_dir="eval/")
 

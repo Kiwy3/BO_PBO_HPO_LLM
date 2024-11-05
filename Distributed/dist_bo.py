@@ -88,7 +88,9 @@ def tensor_csv(data, res,name):
         name (str): The name of the CSV file to save the tensor as.
 
     """
-
+    try : res = res*100
+    except : pass
+    
     import pandas as pd
     data = data.numpy()
     col_name = ["log10(rate),lora_rank"]
@@ -97,7 +99,7 @@ def tensor_csv(data, res,name):
     df.to_csv(f"{name}.csv")
 
 if __name__ == "__main__":
-    X, Y = bayesian_optimization(50)
+    X, Y = bayesian_optimization(20)
     # Print the current state of X and Y, and save the plot as "Single_BO.png"
     print(X, Y)
     tensor_csv(X,Y,"dist_bo")
