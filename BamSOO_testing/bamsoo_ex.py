@@ -14,7 +14,7 @@ from zellij.utils.converters import FloatMinMax, ArrayDefaultC
 
 
 dim = 2
-calls = dim * 10**4
+calls = 100
 
 fun = Rastrigin()
 
@@ -49,18 +49,9 @@ def print_res(path):
     fig, ax = plt.subplots(figsize=(8, 8))
     x = y = np.linspace(fun.lower - 3, fun.upper, 100)
     X, Y = np.meshgrid(x, y)
-    # Z = (1-X)**2+100*(Y-X**2)**2  # Rosenbrock
     Z = (
         X**2 - 10 * np.cos(2 * np.pi * X) + Y**2 - 10 * np.cos(2 * np.pi * Y) + 20
-    )  # Rastrigin
-    # Z = -20*np.exp(-0.2*np.sqrt(0.5*(X**2+Y**2)))-np.exp(0.5*(np.cos(2*np.pi*X)+np.cos(2*np.pi*Y)))+20+np.exp(1)
-    # Z = (
-    #     (X**2 / 4000 + Y**2 / 4000)
-    #     - (
-    #         np.cos(X)* np.cos(Y / np.sqrt(2))
-    #     )
-    #     + 1
-    # ) # Griewank
+    )  
 
     map = ax.contourf(X, Y, Z, cmap="plasma", levels=100)
     fig.colorbar(map)
@@ -75,4 +66,4 @@ def print_res(path):
     plt.scatter(xb, yb, c="green")
     plt.plot()
 
-print_res("soo/outputs/all_evaluations.csv")
+print_res("bamsoo/outputs/all_evaluations.csv")

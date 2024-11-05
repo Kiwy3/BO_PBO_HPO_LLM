@@ -18,7 +18,7 @@ a = ArrayVar(
 )
 sp = Hypersphere(a)
 opt = PHS(sp, inflation=1)
-stop = Calls(himmelblau, 3)
+stop = Calls(himmelblau, 18)
 exp = Experiment(opt, himmelblau, stop)
 exp.run()
 print(f"f({himmelblau.best_point})={himmelblau.best_score}")

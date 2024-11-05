@@ -4,29 +4,20 @@ from zellij.utils import ArrayDefaultC, FloatMinMax
 from zellij.core import Experiment, Loss, Minimizer, Calls
 from zellij.strategies.fractals import PHS
 
-
-from zellij.strategies.fractals.bo.bamsoo import BaMSOO
-from zellij.utils.benchmarks import himmelblau
-from zellij.core.search_space import UnitSearchspace
-
-
 @Loss(objective=[Minimizer("obj")])
 def himmelblau(x):
-    res = (x[0] ** 2 + x[1] - 11) ** 2 + (x[0] + x[1] ** 2 - 7) ** 2
+    res = (x[0] ** 2 + x[1] - 11) ** 2 + (x[0] + x[1] ** 2 - 7) ** 2 +15
     return {"obj": res}
-
 
 a = ArrayVar(
     FloatVar("f1", -5, 5, converter=FloatMinMax()),
     FloatVar("i2", -5, 5, converter=FloatMinMax()),
     converter=ArrayDefaultC(),
 )
-sp = UnitSearchspace(a)
-opt = BaMSOO(sp)
-stop = Calls(himmelblau, 3)
+sp = Hypersphere(a)
+opt = PHS(sp, inflation=1)
+stop = Calls(himmelblau, 18)
 exp = Experiment(opt, himmelblau, stop)
 exp.run()
 print(f"f({himmelblau.best_point})={himmelblau.best_score}")
 print(f"Calls: {himmelblau.calls}")
-
-
