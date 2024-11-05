@@ -4,9 +4,9 @@ import litgpt
 from pathlib import Path
 
 # Import Custom libraries
-from model import LitLLM, merge_lora_weights, lora_filter
-from data import LLMDataModule
-from eval import evaluate
+from .model_full import LLM_model, merge_lora_weights, lora_filter
+from .data import LLMDataModule
+from .eval import evaluate
 
 
 model_dict = {
@@ -69,7 +69,7 @@ def evaluate(HP):
         )
     
     # Generate and train the model
-    model = LitLLM(
+    model = LLM_model(
         low_rank=low_rank, 
         rate=rate,
         l_alpha=lora_alpha,
@@ -120,3 +120,10 @@ def evaluate(HP):
                           out_dir="eval/")
 
     return out["mmlu"]["acc,none"]
+
+if __name__ == "__main__":
+    HP = {"fast_run" : True}
+    import os
+    print(os.getcwd())
+    out = evaluate(HP)
+    print(out)

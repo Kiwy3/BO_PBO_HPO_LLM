@@ -2,9 +2,10 @@
 import torch
 import pytorch_lightning as L
 import litgpt
-from lora import GPT
+from .lora import GPT
 
 class LitLLM(L.LightningModule):
+    
     def __init__(self, low_rank=4, rate=0.002, l_alpha=16, l_dropout=0.05,weight_decay = 1e-2,bar = False, model_name = "tiny-llama-1.1b", model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"):
         """
         Initialize the LitLLM model with specified LoRA parameters.
