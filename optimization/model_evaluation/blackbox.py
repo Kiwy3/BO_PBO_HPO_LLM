@@ -11,7 +11,7 @@ from model_evaluation.eval import task_evaluate
 
 model_dict = {
     "TinyLlama/TinyLlama-1.1B-Chat-v1.0":"tiny-llama-1.1b",
-    "meta-llama/Meta-Llama-3.1-8B":"meta-llama-3.1-8b"
+    "meta-llama/Meta-Llama-3.1-8B":"Llama-3.1-8B"
 
 }
 
@@ -29,9 +29,9 @@ def evaluate(HP):
     - float: The evaluation accuracy of the model on the "mmlu" task.
     """
 
-    model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+    model_id = HP.get("model_id","TinyLlama/TinyLlama-1.1B-Chat-v1.0")
     # Hyper Parameters loading
-    grad_batches = HP.get("grad_batches", 16)
+    grad_batches = HP.get("grad_batches", 4)
     rate = HP.get("learning_rate", 0.002)
     low_rank = HP.get("lora_rank", 4)
     lora_dropout = HP.get("lora_dropout", 0.05)
@@ -64,7 +64,7 @@ def evaluate(HP):
             max_steps=max_steps,
             strategy="ddp_spawn",
             accumulate_grad_batches=grad_batches,
-            precision="bf16-mixed",
+            precision="16-true",
             enable_checkpointing=False,
         )
     
@@ -113,7 +113,7 @@ def evaluate(HP):
 
     # Evaluate the model
     print("Evaluating model")
-    out = evaluate(lora_path,
+    out = task_evaluate(lora_path,
                           tasks="mmlu",
                           limit=50,
                           force_conversion=True,
