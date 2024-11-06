@@ -7,6 +7,7 @@ from pathlib import Path
 from model_evaluation.model_full import LLM_model, merge_lora_weights, lora_filter
 from model_evaluation.data import LLMDataModule
 from model_evaluation.eval import task_evaluate
+from model_evaluation.trainer_plug import quantize_plug
 
 
 model_dict = {
@@ -62,10 +63,12 @@ def evaluate(HP):
             devices=nb_device,
             max_epochs=epochs,
             max_steps=max_steps,
-            strategy="ddp_spawn",
+            #strategy="ddp_spawn",
+            strategy="ddp",
             accumulate_grad_batches=grad_batches,
-            precision="16-true",
+            precision="16-mixed",
             enable_checkpointing=False,
+            #plugins=quantize_plug(),
         )
     
     # Generate and train the model
@@ -81,6 +84,10 @@ def evaluate(HP):
     
     trainer.fit(model, datamodule = data_module)
     
+    if trainer.global_rank > 0:
+        print("Process", trainer.global_rank, "exiting")
+        trainer.strategy.barrier()
+        exit(0)
 
     # Saving unmerged model
     lora_path = "checkpoints/lora"
