@@ -1,5 +1,5 @@
 import torch
-import pytorch_lightning as L
+import lightning as L
 import litgpt
 from pathlib import Path
 

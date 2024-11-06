@@ -1,6 +1,6 @@
 # Librairies import
 import torch
-import pytorch_lightning as L
+import lightning as L
 import litgpt
 from model_evaluation.model_full.lora import GPT
 
