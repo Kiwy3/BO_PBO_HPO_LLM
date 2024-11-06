@@ -31,7 +31,7 @@ from custom_lora import GPT, LoRALinear, lora_filter, merge_lora_weights
 model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 model_dict = {
     "TinyLlama/TinyLlama-1.1B-Chat-v1.0":"tiny-llama-1.1b",
-    "meta-llama/Meta-Llama-3.1-8B":"meta-llama-3.1-8b"
+    "meta-llama/Meta-Llama-3.1-8B":"Llama-3.1-8B"
 
 }
 #model_id = "meta-llama/Meta-Llama-3.1-8B"
