@@ -9,6 +9,7 @@ from zellij.core import ContinuousSearchspace, FloatVar,IntVar, ArrayVar, Loss
 #from model_evaluation import evaluate
 import math
 import json
+from model_evaluation.utils import add_results
 
 hp_def = { 
    "learning_rate" : {"min" : -10,"max" : -1,"type" : "exp"},
@@ -49,6 +50,8 @@ def evaluation_function(x):
     with open(export_file, "a") as outfile:
         json.dump(HP, outfile)
         outfile.write('\n')
+    result = 3*x[0] + 2*x[1]
+    add_results(result, export_file)
     
     #HP["mmlu_acc"] = evaluate(HP)
 
