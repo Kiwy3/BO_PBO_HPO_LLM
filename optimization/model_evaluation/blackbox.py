@@ -12,7 +12,7 @@ from model_evaluation.trainer_plug import quantize_plug
 
 model_dict = {
     "TinyLlama/TinyLlama-1.1B-Chat-v1.0":"tiny-llama-1.1b",
-    "meta-llama/Meta-Llama-3.1-8B":"Llama-3.1-8B"
+    "meta-llama/Meta-Llama-3.1-8B":"Llama-3.1-8B",
 
 }
 
@@ -37,12 +37,16 @@ def evaluate(HP):
     low_rank = HP.get("lora_rank", 4)
     lora_dropout = HP.get("lora_dropout", 0.05)
     lora_alpha = HP.get("lora_alpha", 16)
+    weight_decay = HP.get("weight_decay", 1e-2)
+
+
     device = torch.device(
         HP.get("device", "cuda" if torch.cuda.is_available() else "cpu" ))
     nb_device = HP.get("nb_device", torch.cuda.device_count())
-    weight_decay = HP.get("weight_decay", 1e-2)
+    
     epochs = HP.get("epochs", 1)
     max_steps = 20 if HP.get("fast_run", True) else 2000
+    eval_limit = HP.get("eval_limit", 50)
 
     # Set the precision for A100
     torch.set_float32_matmul_precision('medium')
@@ -63,8 +67,8 @@ def evaluate(HP):
             devices=nb_device,
             max_epochs=epochs,
             max_steps=max_steps,
-            #strategy="ddp_spawn",
-            strategy="ddp",
+            strategy="ddp_spawn",
+            #strategy="ddp",
             accumulate_grad_batches=grad_batches,
             precision="16-mixed",
             enable_checkpointing=False,
@@ -84,10 +88,7 @@ def evaluate(HP):
     
     trainer.fit(model, datamodule = data_module)
     
-    if trainer.global_rank > 0:
-        print("Process", trainer.global_rank, "exiting")
-        trainer.strategy.barrier()
-        exit(0)
+    #if not trainer.is_global_zero: exit(0)
 
     # Saving unmerged model
     lora_path = "checkpoints/lora"
@@ -122,7 +123,7 @@ def evaluate(HP):
     print("Evaluating model")
     out = task_evaluate(lora_path,
                           tasks="mmlu",
-                          limit=50,
+                          limit=eval_limit,
                           force_conversion=True,
                           out_dir="eval/")
 
