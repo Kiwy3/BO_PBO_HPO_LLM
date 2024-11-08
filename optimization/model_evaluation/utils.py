@@ -1,4 +1,4 @@
-
+import json
 
 def quantize_plug(quantize = "bnb.nf4", precision="16-true"):
     import torch
@@ -7,8 +7,15 @@ def quantize_plug(quantize = "bnb.nf4", precision="16-true"):
     plugins = BitsandbytesPrecision(quantize[4:], dtype)
     return plugins
 
+def load_hyperparameters():
+    with open("optimization/export.json","r") as file:
+        
+        for line in file:
+            pass
+    return json.loads(line)
+
 def add_results(results, file = "optimization/export.json"):
-    import json
+    
 
     with open(file, 'r+') as f:
         lines = f.readlines()

@@ -11,14 +11,11 @@ import lightning as L
 from model_evaluation.train_model import LLM_model, merge_lora_weights, lora_filter
 from model_evaluation.train_model import LLM_model
 from model_evaluation.train_model import LLMDataModule
+from model_evaluation.utils import load_hyperparameters
 
-def load_hyperparameters():
-    with open("log.json","r") as file:
-        for line in file:
-            pass
-    return json.loads(line)
 
-def training(HP):
+
+def training():
 
     """
     Train a model with given hyperparameters and experiment settings.
