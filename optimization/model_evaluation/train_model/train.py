@@ -1,12 +1,13 @@
+# Classical libraries
+from pathlib import Path
+
+# Torch libraries
 import torch
 import litgpt
 import lightning as L
-from pathlib import Path
 
+# custom librairies
 from model_evaluation.train_model import LLM_model, merge_lora_weights, lora_filter
-
-
-
 from model_evaluation.train_model import LLM_model
 from model_evaluation.train_model import LLMDataModule
 
@@ -23,7 +24,7 @@ def training(HP):
     Returns:
     - float: The evaluation accuracy of the model on the "mmlu" task.
     """
-    
+
     hyperparameters = HP["hyperparameters"]
     experiment = HP["experiment"]
 
