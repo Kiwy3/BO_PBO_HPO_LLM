@@ -12,5 +12,3 @@ __all__ = [
     "lora_filter",
     "training",
     "GPT"]
-
-training()
