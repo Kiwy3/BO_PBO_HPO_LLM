@@ -4,8 +4,8 @@ import litgpt
 from pathlib import Path
 
 # Import Custom libraries
-from model_evaluation.model_full import LLM_model, merge_lora_weights, lora_filter
-from model_evaluation.data import LLMDataModule
+from model_evaluation.train_model import LLM_model, merge_lora_weights, lora_filter
+from optimization.model_evaluation.train_model.data import LLMDataModule
 from model_evaluation.eval import task_evaluate
 from model_evaluation.trainer_plug import quantize_plug
 
@@ -42,6 +42,7 @@ def evaluate(HP):
     weight_decay = hyperparameters.get("weight_decay", 1e-2)
 
     model_id = experiment.get("model_id","TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+    model_name = experiment.get("model_name","tiny-llama-1.1b")
     device = torch.device(
         experiment.get("device", "cuda" if torch.cuda.is_available() else "cpu" ))
     nb_device = experiment.get("nb_device", torch.cuda.device_count())
@@ -83,7 +84,7 @@ def evaluate(HP):
         l_alpha=lora_alpha,
         l_dropout=lora_dropout,
         weight_decay = weight_decay,
-        model_name=model_dict[model_id],
+        model_name=model_name,
         model_id=model_id        
         ).to(device)
     
