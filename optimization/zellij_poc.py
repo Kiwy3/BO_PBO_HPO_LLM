@@ -6,10 +6,11 @@ from zellij.utils.converters import IntMinmax
 from zellij.core.objective import Maximizer
 from zellij.core import ContinuousSearchspace, FloatVar,IntVar, ArrayVar, Loss 
 #from zellij.utils.benchmarks import himmelblau
-from model_evaluation import evaluate
+#from model_evaluation import evaluate
 import math
+import json
 
-hyperparameters = { 
+hp_def = { 
    "learning_rate" : {"min" : -10,"max" : -1,"type" : "exp"},
    "lora_rank" : {"min" : 2,"max" : 32,"type" : "int"},
    "grad_batches" : {"min" : 0,"max" : 16,"type" : "int"},
@@ -18,7 +19,7 @@ hyperparameters = {
    "weight_decay" : {"min" : 0,"max" : 0.5,"type" : "float"}, 
    }
 
-def convert(x,i, hyperparameters=hyperparameters):
+def convert(x,i, hyperparameters=hp_def):
     key = list(hyperparameters.keys())[i]
     type = hyperparameters[key]["type"]
     if type == "int":
@@ -31,14 +32,21 @@ def convert(x,i, hyperparameters=hyperparameters):
 
 #from model_evaluation import evaluate
 def evaluation_function(x):
-    HP = {"fast_run" : False,
-          "eval_limit" : 100}
+    hyperparameters = {}
+    for i in range(len(hp_def.keys())):
+        key = list(hp_def.keys())[i]
+        hyperparameters[key] = convert(x,i)
 
-    for i in range(len(hyperparameters.keys())):
-        key = list(hyperparameters.keys())[i]
-        HP[key] = convert(x,i)
-    print("HP",HP)
-    return evaluate(HP)
+    HP = {"hyperparameters" : hyperparameters,
+          "experiment" : experiment}
+    
+    with open(export_file, "a") as outfile:
+        json.dump(HP, outfile)
+        outfile.write('\n')
+    
+    #HP["mmlu_acc"] = evaluate(HP)
+
+    return 1#HP["mmlu_acc"]
 
 
 
@@ -48,20 +56,23 @@ def himmelblau(x):
 
 
 if __name__ == "__main__":
+    export_file = "optimization/export.json"
+    experiment = {"model_id" : "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+                  "nb_device" : 2,
+                  "epochs" : 1,
+                  "device" : "cuda",
+                  "fast_run" : True}
+
     loss = Loss(objective=Maximizer)(evaluation_function)
-    """ values = ArrayVar(
-                    FloatVar("learning_rate",-10,-1),
-                    FloatVar("lora_rank",2,32),
-                    ) """
 
+    # define the search space
     values = ArrayVar()
-
-    for i in range(hyperparameters.keys().__len__()):
-        key = list(hyperparameters.keys())[i]
+    for i in range(hp_def.keys().__len__()):
+        key = list(hp_def.keys())[i]
         values.append(
             FloatVar( key, 
-                hyperparameters[key]["min"],
-                hyperparameters[key]["max"]            
+                hp_def[key]["min"],
+                hp_def[key]["max"]            
             )
         )
                   
