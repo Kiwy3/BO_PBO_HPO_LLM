@@ -7,7 +7,7 @@ from pathlib import Path
 from model_evaluation.train_model import LLM_model, merge_lora_weights, lora_filter
 from optimization.model_evaluation.train_model.data import LLMDataModule
 from model_evaluation.eval import task_evaluate
-from model_evaluation.trainer_plug import quantize_plug
+from optimization.model_evaluation.utils import quantize_plug
 
 
 model_dict = {
