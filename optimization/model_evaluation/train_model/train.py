@@ -1,5 +1,6 @@
 # Classical libraries
 from pathlib import Path
+import json
 
 # Torch libraries
 import torch
@@ -11,20 +12,23 @@ from model_evaluation.train_model import LLM_model, merge_lora_weights, lora_fil
 from model_evaluation.train_model import LLM_model
 from model_evaluation.train_model import LLMDataModule
 
+def load_hyperparameters():
+    with open("log.json","r") as file:
+        for line in file:
+            pass
+    return json.loads(line)
+
 def training(HP):
 
     """
-    Evaluates a model with specified hyperparameters, trains it, and returns the evaluation accuracy.
+    Train a model with given hyperparameters and experiment settings.
 
     Args:
-    - HP (dict): A dictionary containing hyperparameters such as 'grad_batches', 'learning_rate',
-      'lora_rank', 'lora_dropout', 'lora_alpha', 'device', 'nb_device', 'weight_decay', 'epochs',
-      'fast_run', and 'idx'.
-
-    Returns:
-    - float: The evaluation accuracy of the model on the "mmlu" task.
+    - HP: a dictionary with two keys: "hyperparameters" and "experiment". The first one contains all the hyperparameters
+          to be used for training, and the second one contains the experiment settings such as model name, device, and
+          number of devices.
     """
-
+    HP = load_hyperparameters()
     hyperparameters = HP["hyperparameters"]
     experiment = HP["experiment"]
 
