@@ -2,7 +2,7 @@
 import torch
 import lightning as L
 import litgpt
-from model_evaluation.model_full.lora import GPT
+from model_evaluation.train_model.lora import GPT
 
 class LitLLM(L.LightningModule):
     

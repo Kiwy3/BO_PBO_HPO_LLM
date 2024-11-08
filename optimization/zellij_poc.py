@@ -10,6 +10,10 @@ from zellij.core import ContinuousSearchspace, FloatVar,IntVar, ArrayVar, Loss
 import math
 import json
 
+# custom librairies
+import model_evaluation
+from model_evaluation import training, evaluate
+
 hp_def = { 
    "learning_rate" : {"min" : -10,"max" : -1,"type" : "exp"},
    "lora_rank" : {"min" : 2,"max" : 32,"type" : "int"},
@@ -18,6 +22,12 @@ hp_def = {
    "lora_dropout" : {"min" : 0,"max" : 0.5,"type" : "float"},
    "weight_decay" : {"min" : 0,"max" : 0.5,"type" : "float"}, 
    }
+
+model_dict = {
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0":"tiny-llama-1.1b",
+    "meta-llama/Meta-Llama-3.1-8B":"Llama-3.1-8B",
+
+}
 
 def convert(x,i, hyperparameters=hp_def):
     key = list(hyperparameters.keys())[i]
@@ -32,21 +42,24 @@ def convert(x,i, hyperparameters=hp_def):
 
 #from model_evaluation import evaluate
 def evaluation_function(x):
+    # convert x into hyperparameters
     hyperparameters = {}
     for i in range(len(hp_def.keys())):
         key = list(hp_def.keys())[i]
         hyperparameters[key] = convert(x,i)
 
+    # save hyperparameters
     HP = {"hyperparameters" : hyperparameters,
-          "experiment" : experiment}
-    
+          "experiment" : experiment}   
     with open(export_file, "a") as outfile:
         json.dump(HP, outfile)
         outfile.write('\n')
-    
-    #HP["mmlu_acc"] = evaluate(HP)
+    print(model_evaluation.utils.load_hyperparameters())
 
-    return 1#HP["mmlu_acc"]
+    training()
+    result = evaluate()
+
+    return result["mmlu"]
 
 
 
@@ -61,7 +74,11 @@ if __name__ == "__main__":
                   "nb_device" : 2,
                   "epochs" : 1,
                   "device" : "cuda",
-                  "fast_run" : True}
+                  "fast_run" : False,
+                  "eval_limit" : 100,
+                  "calls":100
+                  }
+    experiment["model_name"] = model_dict[experiment["model_id"]]
 
     loss = Loss(objective=Maximizer)(evaluation_function)
 
@@ -107,7 +124,7 @@ if __name__ == "__main__":
 
         return sp
 
-    sp = Direct_al(values, loss, 50)
+    sp = Direct_al(values, loss, experiment.get("calls",10))
     best = (sp.loss.best_point, sp.loss.best_score)
     print(f"Best solution found:f({best[0]})={best[1]}")
     print("\nsolutions",sp.loss.all_solutions)
