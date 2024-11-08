@@ -19,6 +19,12 @@ hp_def = {
    "weight_decay" : {"min" : 0,"max" : 0.5,"type" : "float"}, 
    }
 
+model_dict = {
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0":"tiny-llama-1.1b",
+    "meta-llama/Meta-Llama-3.1-8B":"Llama-3.1-8B",
+
+}
+
 def convert(x,i, hyperparameters=hp_def):
     key = list(hyperparameters.keys())[i]
     type = hyperparameters[key]["type"]
@@ -61,7 +67,9 @@ if __name__ == "__main__":
                   "nb_device" : 2,
                   "epochs" : 1,
                   "device" : "cuda",
-                  "fast_run" : True}
+                  "fast_run" : True,
+                  }
+    experiment["model_name"] = model_dict[experiment["model_id"]]
 
     loss = Loss(objective=Maximizer)(evaluation_function)
 
