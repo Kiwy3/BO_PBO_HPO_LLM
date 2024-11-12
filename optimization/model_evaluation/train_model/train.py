@@ -27,7 +27,7 @@ def training():
     """
     HP = load_hyperparameters()
     hyperparameters = HP["hyperparameters"]
-    experiment = HP["experiment"]
+    
 
     
     # Hyper Parameters loading
@@ -39,6 +39,7 @@ def training():
     weight_decay = hyperparameters.get("weight_decay", 1e-2)
 
     # experiment parameters
+    experiment = json.load("optimization/config.json")["experiment"]
     model_id = experiment.get("model_id","TinyLlama/TinyLlama-1.1B-Chat-v1.0")
     model_name = experiment.get("model_name","tiny-llama-1.1b")
     device = torch.device(
