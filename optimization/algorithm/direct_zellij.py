@@ -38,7 +38,6 @@ def convert(x,i, hyperparameters=hp_def):
         return math.exp(x[i])
     elif type == "float":
         return float(x[i])
-    values
 
 #from model_evaluation import evaluate
 def evaluation_function(x):

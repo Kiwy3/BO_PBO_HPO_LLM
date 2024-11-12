@@ -11,8 +11,8 @@ import math
 import json
 
 # custom librairies
-#import model_evaluation
-#from model_evaluation import training, evaluate
+import model_evaluation
+from model_evaluation import training, evaluate
 
 hp_def = { 
    "learning_rate" : {"min" : -10,"max" : -1,"type" : "exp"},
