@@ -2,6 +2,7 @@
 import torch
 from pathlib import Path
 import json
+import math
 import pandas as pd
 
 # Bayesian function
@@ -15,7 +16,7 @@ from botorch.acquisition.analytic import LogExpectedImprovement
 
 # custom librairies
 from model_evaluation import training, evaluate
-from optimization.utilities import convert, load_config
+from utilities import convert, load_config
 
 
 
@@ -57,8 +58,8 @@ if __name__ == "__main__":
     bounds = torch.stack((lower_bounds, upper_bounds)
     )
     
-    if Path(experiment["file"]).is_file():
-        data = pd.read_json(experiment["file"],lines=True)
+    if Path(experiment["historic_file"]).is_file():
+        data = pd.read_json(experiment["historic_file"],lines=True)
         data = data[data.results.notnull()]
         Y = data.results.apply(lambda x: [x["mmlu"]])
         Y = torch.tensor(Y,dtype=torch.double)
@@ -86,10 +87,16 @@ if __name__ == "__main__":
         print("\t optimizing model")
         mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
         fit_gpytorch_mll(mll)
-        logEI = LogExpectedImprovement(model=gp, best_f=Y.max(),)
+        logEI = LogExpectedImprovement(model=gp, best_f=Y.max(),maximize=True)
+        if i ==0:
+            solution = torch.tensor([X[1].tolist()],dtype=torch.double)
+            print(solution)
+            print(math.exp(logEI(solution)))
         candidate, acq_value = optimize_acqf(
             logEI, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
         )
+
+
 
         # Compute the new evaluation
         print("\t computing new evaluation")
