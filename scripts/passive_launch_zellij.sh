@@ -1,10 +1,10 @@
 #!/bin/bash
 #OAR -q testing
 #OAR -p chuc
-#OAR -l walltime=12
+#OAR -l walltime=20
 #OAR -n Zellij_POC_LLM
-#OAR -O OAR_BO_%jobid%.out
-#OAR -E OAR_BO_%jobid%.err
+#OAR -O OAR_zellij_%jobid%.out
+#OAR -E OAR_zellij_%jobid%.err
 
 
 hostname
