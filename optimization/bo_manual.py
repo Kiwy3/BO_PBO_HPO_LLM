@@ -23,8 +23,8 @@ from botorch.optim import optimize_acqf
 from botorch.acquisition.analytic import LogExpectedImprovement
 
 # custom librairies
-#import model_evaluation
-#from model_evaluation import training, evaluate
+import model_evaluation
+from model_evaluation import training, evaluate
 
 hp_def = { 
    "learning_rate" : {"min" : -10,"max" : -1,"type" : "exp"},
@@ -45,15 +45,14 @@ def convert(x,i, hyperparameters=hp_def):
     key = list(hyperparameters.keys())[i]
     type = hyperparameters[key]["type"]
     if type == "int":
-        return int(x[i].item())
+        return int(x[i])
     elif type == "exp":
-        return math.exp(x[i].item())
+        return math.exp(x[i])
     elif type == "float":
-        return float(x[i].item())
+        return float(x[i])
 
 #from model_evaluation import evaluate
 def evaluation_function(x):
-    return himmelblau(x)
     # convert x into hyperparameters
     hyperparameters = {}
     for i in range(len(hp_def.keys())):
@@ -63,7 +62,7 @@ def evaluation_function(x):
     # save hyperparameters
     HP = {"hyperparameters" : hyperparameters,
           "experiment" : experiment}   
-    with open(export_file, "a") as outfile:
+    with open(export_file, "a+") as outfile:
         json.dump(HP, outfile)
         outfile.write('\n')
     print(model_evaluation.utils.load_hyperparameters())
@@ -72,6 +71,7 @@ def evaluation_function(x):
     result = evaluate()
 
     return result["mmlu"]
+    #return himmelblau(x)
 
 
 
@@ -85,10 +85,10 @@ if __name__ == "__main__":
                   "nb_device" : 2,
                   "epochs" : 1,
                   "device" : "cuda",
-                  "fast_run" : False,
+                  "fast_run" : True,
                   "eval_limit" : 100,
                   "calls":50,
-                  "file" : "analysis/analysis2.json"
+                  "file" : "optimization/analysis/analysis2.json"
                   }
     experiment["model_name"] = model_dict[experiment["model_id"]]
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
     print("model initialized")
     for i in range(experiment.get("calls",10)):
-        print("iteration ",i,":")
+        print("iteration ",i+1,":")
         # Define the model
         print("\t creating new model")
         gp = MixedSingleTaskGP(
