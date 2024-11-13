@@ -5,10 +5,10 @@ from model_evaluation.utils import load_hyperparameters, add_results, load_confi
 
 
 def evaluate():
-    tasks = ["mmlu"]
     lora_path = "checkpoints/lora"
-    _, _, HP = load_config()
-    eval_limit = HP["eval_limit"]
+    _, _, experiment = load_config()
+    tasks = experiment["tasks"]
+    eval_limit = experiment["eval_limit"]
     results = task_evaluate(lora_path,
                         tasks=tasks[0] if len(tasks) == 1 else tasks,
                         limit=eval_limit,

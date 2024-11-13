@@ -9,7 +9,7 @@ import torch
 from litgpt.utils import copy_config_files, auto_download_checkpoint
 #from model_conversion import convert_checkpoint
 
-def prepare_results(results, save_filepath, print_results=True, save_results=False):
+def prepare_results(results, save_filepath, print_results=True, save_results=True):
     from lm_eval.utils import make_table
 
     if print_results:
@@ -19,7 +19,6 @@ def prepare_results(results, save_filepath, print_results=True, save_results=Fal
             print("Grouped results:")
             print(make_table(results, "groups"))
 
-    dic = results["results"]["mmlu"]["acc,none"]
 
     if save_results:
         json_result = json.dumps(
