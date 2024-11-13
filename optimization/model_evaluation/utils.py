@@ -26,3 +26,8 @@ def add_results(results, file = "optimization/export.json"):
         f.seek(0)
         f.writelines(lines)
         f.truncate()
+
+def load_config():
+    with open("optimization/config.json") as f:
+        config = json.load(f)
+    return config["hyperparameters"], config["models"], config["experiment"]
