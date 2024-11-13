@@ -21,13 +21,13 @@
     },
     "experiment": {
         "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-        "nb_device": 2,
+        "nb_device": 4,
         "epochs": 1,
         "device": "cuda",
         "fast_run": false,
         "eval_limit": 100,
         "calls": 100,
-        "historic_file": "optimization/analysis/analysis2.json",
+        "historic_file": "optimization/historic/bo.json",
         "model_name": "tiny-llama-1.1b",
         "tasks": ["mmlu"]
     }

@@ -9,6 +9,7 @@ def evaluate():
     _, _, experiment = load_config()
     tasks = experiment["tasks"]
     eval_limit = experiment["eval_limit"]
+    eval_limit = None
     results = task_evaluate(lora_path,
                         tasks=tasks[0] if len(tasks) == 1 else tasks,
                         limit=eval_limit,
