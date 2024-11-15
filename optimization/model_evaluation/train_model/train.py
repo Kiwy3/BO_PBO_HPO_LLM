@@ -46,6 +46,7 @@ def training():
     device = torch.device(
         experiment.get("device", "cuda" if torch.cuda.is_available() else "cpu" ))
     nb_device = experiment.get("nb_device", torch.cuda.device_count())
+    nb_device = min(nb_device,torch.cuda.device_count())
     epochs = experiment.get("epochs", 1)
     max_steps = 20 if experiment.get("fast_run", True) else 2000
     strategy = experiment.get("strategy", "ddp_spawn")
