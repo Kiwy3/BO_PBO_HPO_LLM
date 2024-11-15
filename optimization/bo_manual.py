@@ -16,7 +16,7 @@ from botorch.acquisition.analytic import LogExpectedImprovement
 
 # custom librairies
 from model_evaluation import training, evaluate
-from utilities import convert, load_config
+from model_evaluation.utils import convert, load_config
 
 
 
