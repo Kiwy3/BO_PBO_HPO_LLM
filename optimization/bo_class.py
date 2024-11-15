@@ -1,9 +1,11 @@
 import torch
 import pandas as pd
 import json
+import datetime
 from pathlib import Path
 import matplotlib.pyplot as plt
-
+from model_evaluation import training, evaluate
+from model_evaluation.utils import convert, load_config, add_results
 #BoTorch
 from botorch.models import SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
@@ -11,12 +13,13 @@ from botorch.fit import fit_gpytorch_mll
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from botorch.optim import optimize_acqf
 from botorch.acquisition.analytic import LogExpectedImprovement
+
 def load_config():    
     with open("optimization/config.json") as f:
         config = json.load(f)
     return config["hyperparameters"], config["models"], config["experiment"]
 
-class BO_GP():
+class BO_HPO():
     def __init__(self,config=None,LHS_g=10):
         if config is None:
             self.hyperparameters, self.model, self.experiment = load_config()
@@ -24,11 +27,11 @@ class BO_GP():
             self.hyperparameters = config["hyperparameters"]
             self.model = config["model"]
             self.experiment = config["experiment"]
-
+        self.hp_key = list(self.hyperparameters.keys())
         self.dim = len(self.hyperparameters)
         self.lower_bounds = torch.tensor([self.hyperparameters[key]["min"] for key in self.hyperparameters.keys()])
         self.upper_bounds = torch.tensor([self.hyperparameters[key]["max"] for key in self.hyperparameters.keys()])
-        self.bounds = torch.stack((self.lower_bounds, self.upper_bounds))
+        self.bounds = torch.stack((self.lower_bounds, self.upper_bounds)).to(torch.double)
         if Path(self.experiment["historic_file"]).is_file():
             self.X = self.load_points()
         else:
@@ -36,9 +39,8 @@ class BO_GP():
             self.X = torch.tensor(self.LHS_sampling(g=LHS_g))
             self.Y = []
             for x in self.X:
-                self.Y.append([self.evaluate(x)])
+                self.Y.append([self.evaluate(x,phase="sampling")])
             self.Y = torch.tensor(self.Y,dtype=torch.double)
-            print("Y = ",self.Y)
 
 
     def LHS_sampling(self,g=10):
@@ -59,7 +61,7 @@ class BO_GP():
         X = pd.json_normalize(data["hyperparameters"])
         X = torch.tensor(X.values,dtype=torch.double)
 
-    def GP_acq(self):
+    def new_point(self):
         gp = SingleTaskGP(
         train_X=self.X,
         train_Y=self.Y,
@@ -69,10 +71,8 @@ class BO_GP():
         mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
         fit_gpytorch_mll(mll)
         self.logEI = LogExpectedImprovement(model=gp, best_f=self.Y.max(),maximize=True)
-
-    def optGP_sol(self):
-
         candidate, acq_value = optimize_acqf(
+            #self.logEI, bounds=self.bounds, q=1, num_restarts=5, raw_samples=10,
             self.logEI, bounds=self.bounds, q=1, num_restarts=5, raw_samples=20,
         )
         candidate_list = [candidate[0][i].item() for i in range(len(candidate[0]))]
@@ -80,39 +80,76 @@ class BO_GP():
         self.X = torch.cat((self.X,candidate))
         self.Y = torch.cat((self.Y, torch.tensor([[score]],dtype=torch.double)))
 
-    def evaluate(self,x):
-        return (((x[0]**2+x[1]-11)**2) + (((x[0]+x[1]**2-7)**2)))
+
+    def eval_benchmark(self,x,name="Rosenbrock"):
+        if name == "Rosenbrock":
+            y = 0
+            for i in range(len(x)-1):
+                y += 100*( (x[i+1]**2-x[i]**2)**2 + ((x[i+1]-1)**2) )
+            return y
+        elif name == "Himmelblau":
+            return (((x[0]**2+x[1]-11)**2) + (((x[0]+x[1]**2-7)**2)))
+
+
+    def evaluate(self,x, phase = "optimization"):
+        # convert x into hyperparameters
+        hyperparameters = {}
+        for i in range(len(self.hyperparameters.keys())):
+            key = self.hp_key[i]
+            hyperparameters[key] = convert(x,i, self.hyperparameters)
+
+        meta_data = {"date":datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                     "algorithm" : "BO",
+                     "phase" : phase,
+        }
+        # save hyperparameters
+        HP = {"hyperparameters" : hyperparameters,
+              "meta_data" : meta_data}
+        
+        # writing in the file   
+        export_file = "optimization/export.json"
+        with open(export_file, "a+") as outfile:
+            json.dump(HP, outfile)
+            outfile.write('\n')
+
+        training()
+        result = evaluate()
+        add_results(results=result,) 
+
+        return result["mmlu"]
 
 
     def run(self,n = 10):
         for i in range(n):
             print("iteration ",i+1,":")
-            print("\t fitting model")
-            self.GP_acq()
-            print("\t optimizing and evaluate solution")
-            self.optGP_sol()
+            self.new_point()
+            print("\t new point : ",self.X[-1], "\n\t new score : ",self.Y[-1])
+
 
 
 if __name__ == "__main__":
-    config = {    
-        "hyperparameters": { 
-            "dim1" : {"min" : -6,"max" : 6,"type" : "exp"},
-            "dim2" : {"min" : -6,"max" : 6,"type" : "int"}
-        },
-        "model":{
-            "TinyLlama/TinyLlama-1.1B-Chat-v1.0":"tiny-llama-1.1b",
-            "meta-llama/Meta-Llama-3.1-8B":"Llama-3.1-8B"
-        },
-        "experiment": {
-            "historic_file": "fake.json",
-        }
-    }
-    g=5
-    bo = BO_GP(config,LHS_g=g)
-    print(bo.X,"\n", bo.Y)
-    plt.scatter(bo.X[:,0],bo.X[:,1], c= "red")
-    
+
+    g=10
+    bo = BO_HPO(LHS_g=g)
+    print(bo.X,"\n", bo.Y, bo.bounds)
     bo.run(n=10)
+
+
+
+
+    """ plt.scatter(bo.X[:,0],bo.X[:,1], c= "red")
+    plt.xlim(
+        config["hyperparameters"]["dim1"]["min"],bo.hyperparameters["hyperparameters"]["dim1"]["max"]
+        )
+    plt.ylim(
+        config["hyperparameters"]["dim2"]["min"],config["hyperparameters"]["dim2"]["max"]
+        )
     plt.scatter(bo.X[g:,0],bo.X[g:,1], c= "blue")
+    for i in range(len(bo.Y)):
+        plt.text(bo.X[i,0],bo.X[i,1],str(i))
     plt.show()
+
+    plt.scatter(range(len(bo.Y)),bo.Y)
+    plt.scatter(range(g,len(bo.Y)),bo.Y[g:])
+    plt.show() """
     
