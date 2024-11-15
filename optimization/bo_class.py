@@ -132,24 +132,5 @@ if __name__ == "__main__":
     g=10
     bo = BO_HPO(LHS_g=g)
     print(bo.X,"\n", bo.Y, bo.bounds)
-    bo.run(n=10)
-
-
-
-
-    """ plt.scatter(bo.X[:,0],bo.X[:,1], c= "red")
-    plt.xlim(
-        config["hyperparameters"]["dim1"]["min"],bo.hyperparameters["hyperparameters"]["dim1"]["max"]
-        )
-    plt.ylim(
-        config["hyperparameters"]["dim2"]["min"],config["hyperparameters"]["dim2"]["max"]
-        )
-    plt.scatter(bo.X[g:,0],bo.X[g:,1], c= "blue")
-    for i in range(len(bo.Y)):
-        plt.text(bo.X[i,0],bo.X[i,1],str(i))
-    plt.show()
-
-    plt.scatter(range(len(bo.Y)),bo.Y)
-    plt.scatter(range(g,len(bo.Y)),bo.Y[g:])
-    plt.show() """
+    bo.run(n=50)
     
