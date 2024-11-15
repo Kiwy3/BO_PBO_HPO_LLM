@@ -66,8 +66,7 @@ if __name__ == "__main__":
         X = pd.json_normalize(data["hyperparameters"])
         X = torch.tensor(X.values,dtype=torch.double)
     else:
-        X = [(lower_bounds+upper_bounds)/2].to(torch.double)
-        #X = torch.tensor(X,dtype=torch.double)
+        X = (lower_bounds+upper_bounds)/2
         Y = torch.tensor([evaluation_function(X)],dtype=torch.double)
 
     print("model initialized")
@@ -78,7 +77,6 @@ if __name__ == "__main__":
         gp = MixedSingleTaskGP(
         train_X=X,
         train_Y=Y,
-        cat_dims=[-1],
         input_transform=Normalize(d=len(hp_def.keys())),
         outcome_transform=Standardize(m=1),
         )
@@ -88,10 +86,6 @@ if __name__ == "__main__":
         mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
         fit_gpytorch_mll(mll)
         logEI = LogExpectedImprovement(model=gp, best_f=Y.max(),maximize=True)
-        if i ==0:
-            solution = torch.tensor([X[1].tolist()],dtype=torch.double)
-            print(solution)
-            print(math.exp(logEI(solution)))
         candidate, acq_value = optimize_acqf(
             logEI, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
         )
