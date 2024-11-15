@@ -17,5 +17,4 @@ def evaluate():
     res = {}
     for task in tasks:
         res[task] =  results[task]["acc,none"]
-    add_results(results=res,) 
     return res
