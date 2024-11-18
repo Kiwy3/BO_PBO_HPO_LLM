@@ -4,8 +4,6 @@ import json
 import datetime
 from pathlib import Path
 import matplotlib.pyplot as plt
-from model_evaluation import training, evaluate
-from model_evaluation.utils import convert, load_config, add_results
 
 from model_evaluation import ModelEvaluator
 
