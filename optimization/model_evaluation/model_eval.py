@@ -10,6 +10,25 @@ from utils import add_results """
 
 class ModelEvaluator:
     def __init__(self, config=None):
+        """
+        Initialize ModelEvaluator object.
+
+        Parameters
+        ----------
+        config : dict, optional
+            Experiment configuration. If not provided, load from config.json.
+
+        Attributes
+        ----------
+        hyperparameters : dict
+            Hyperparameter definitions.
+        models : dict
+            Models available for evaluation.
+        experiment : dict
+            Experiment settings.
+        hp_key : list
+            Names of hyperparameters.
+        """
         if config is None:
             self.load_config()
         else:
@@ -21,23 +40,30 @@ class ModelEvaluator:
 
     def validate(self):
         lora_path = self.experiment["lora_path"]
-        tasks = self.experiment["tasks"]
+        self.tasks = self.experiment["tasks"]
         eval_limit = self.experiment["eval_limit"]
+        if eval_limit == 0:
+            eval_limit = None
         results = task_evaluate(lora_path,
-                            tasks=tasks[0] if len(tasks) == 1 else tasks,
+                            tasks=self.tasks[0] if len(self.tasks) == 1 else self.tasks,
                             limit=eval_limit,
                             force_conversion=True,
                             out_dir="eval/")
         res = {}
-        for task in tasks:
-            res[task] =  results[task]["acc,none"]
-        return res
+        try:
+            for task in self.tasks:
+                res[task] =  results[task]["acc_norm,none"]
+            return res
+        except:
+            for task in self.tasks:
+                res[task] =  results[task]["acc,none"]
+            return res
     
     def load_config(self):    
         with open("optimization/config.json") as f:
             config = json.load(f)
         self.hyperparameters = config["hyperparameters"]
-        self.model = config["model"]
+        self.model = config["models"]
         self.experiment = config["experiment"]
 
     def convert (self,x,i):
@@ -50,7 +76,17 @@ class ModelEvaluator:
         elif type == "float":
             return float(x[i])
 
-    def evaluate(self,x, phase = "optimization"):
+    def evaluate(self,x, phase = "optimization")->float:
+        """
+        Evaluate the model with the given hyperparameters.
+
+        Args:
+            x (list): Hyperparameters to evaluate.
+            phase (str, optional): Phase of the evaluation. Defaults to "optimization".
+
+        Returns:
+            float: Result of the evaluation.
+        """
         hyperparameters = {}
         for i in range(len(self.hyperparameters.keys())):
             key = self.hp_key[i]
@@ -74,7 +110,7 @@ class ModelEvaluator:
         result = self.validate()
         add_results(results=result,) 
 
-        return result["mmlu"]
+        return result[self.tasks[0]]
 
 if __name__ == "__main__":
     evaluator = ModelEvaluator()
