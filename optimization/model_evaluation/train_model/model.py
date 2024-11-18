@@ -151,7 +151,8 @@ class LitLLM(L.LightningModule):
         This schedule will increase the learning rate linearly for the first
         10 steps, and then keep it constant.
         """
-        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay, betas=(0.9, 0.95))
+        #optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay, betas=(0.9, 0.95))
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: step / 10)
         return [optimizer], [scheduler]
     
