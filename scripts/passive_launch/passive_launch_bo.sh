@@ -2,7 +2,7 @@
 #OAR -q testing
 #OAR -p chuc
 #OAR -l walltime=15
-#OAR -n Bayesian Opt of LLM
+#OAR -n BO_LLM_FT
 #OAR -O OAR_BO_%jobid%.out
 #OAR -E OAR_BO_%jobid%.err
 
@@ -13,4 +13,4 @@ date
 
 cd ft_poc
 source /home/ndavouse/ft_poc/.venv/bin/activate
-python ./optimization/bo_manual.py
+python ./optimization/run.py
