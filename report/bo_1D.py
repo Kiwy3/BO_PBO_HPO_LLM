@@ -35,7 +35,7 @@ bounds = torch.stack((lower_bounds, upper_bounds)).unsqueeze(-1).to(torch.double
 
 
 gp = SingleTaskGP(
-    train_X=torch.tensor(train_X),
+    train_X=train_X,
     train_Y=Y,
     input_transform=Normalize(d=1),
     outcome_transform=Standardize(m=1),
