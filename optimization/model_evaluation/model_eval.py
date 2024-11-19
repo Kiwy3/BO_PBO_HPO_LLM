@@ -39,6 +39,14 @@ class ModelEvaluator:
 
 
     def validate(self):
+        """
+        Evaluate the model on the given tasks.
+
+        Returns
+        -------
+        dict
+            Dictionary with task names as keys and accuracy on that task as values.
+        """
         lora_path = self.experiment["lora_path"]
         self.tasks = self.experiment["tasks"]
         eval_limit = self.experiment["eval_limit"]
@@ -111,6 +119,9 @@ class ModelEvaluator:
         add_results(results=result,) 
 
         return result[self.tasks[0]]
+    
+    def __call__(self, x):
+        return self.evaluate(x)
 
 if __name__ == "__main__":
     evaluator = ModelEvaluator()
