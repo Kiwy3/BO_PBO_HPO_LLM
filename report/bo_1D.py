@@ -46,10 +46,31 @@ fit_gpytorch_mll(mll)
 logEI = LogExpectedImprovement(model=gp, best_f=Y.max(),maximize=True)
 ucb = UpperConfidenceBound(gp, beta=0.2)
 
-
+def mean_sigma(X):
+    posterior = gp.posterior(X)
+    return posterior.mean.detach().numpy(),posterior.stddev.detach().numpy()
 
 x_list = torch.linspace(-5, 5, 500)
-y_ucb = []
+y_mean = []
+y_lb = []
+y_ub = []
+beta = ucb._buffers["beta"]
+for x in x_list:
+    mean, sigma = mean_sigma(torch.tensor([[x]],dtype=torch.double))
+    mean = mean.squeeze(-2).squeeze(-1)
+    y_mean.append(mean)
+    
+    std = torch.sqrt(beta * sigma).detach().numpy()
+    y_lb.append(sum(mean - std))
+    y_ub.append(sum(mean + std))
+
+plt.plot(x_list,y_mean,c="black",label="mean")
+plt.fill_between(x_list,y_lb,y_ub,alpha=0.2)
+
+
+
+
+""" y_ucb = []
 y_ei = []
 for x in x_list:
     new_x = torch.tensor([[x]],dtype=torch.double)
@@ -70,7 +91,7 @@ for i in range(10):
     )
     plt.scatter(candidate,acq_value,c="red")
     break
-plt.show()
+plt.show() """
 
 
 
