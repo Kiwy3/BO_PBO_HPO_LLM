@@ -28,7 +28,6 @@ def training():
     HP = load_hyperparameters()
     hyperparameters = HP["hyperparameters"]
     
-
     
     # Hyper Parameters loading
     grad_batches = hyperparameters.get("grad_batches", 4)
@@ -50,13 +49,16 @@ def training():
     epochs = experiment.get("epochs", 1)
     max_steps = 20 if experiment.get("fast_run", True) else 2000
     strategy = experiment.get("strategy", "ddp_spawn")
+    dataset = experiment.get("dataset","tatsu-lab/alpaca")
 
     # Set the precision for A100
     torch.set_float32_matmul_precision('medium')
 
     # Data module management
     data_module = LLMDataModule(
-        val_split_fraction=0.2,  # Adjust as needed
+        val_split_fraction=0.05,  # Adjust as needed
+        repo_id=dataset
+
 )
     data_module.connect(
         tokenizer=litgpt.Tokenizer(f"checkpoints/{model_id}"),

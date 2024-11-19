@@ -4,8 +4,9 @@ import json
 import datetime
 from pathlib import Path
 import matplotlib.pyplot as plt
-from model_evaluation import training, evaluate
-from model_evaluation.utils import convert, load_config, add_results
+
+from model_evaluation import ModelEvaluator
+
 #BoTorch
 from botorch.models import SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
@@ -19,15 +20,9 @@ def load_config():
         config = json.load(f)
     return config["hyperparameters"], config["models"], config["experiment"]
 
-class BO_HPO():
+class BO_HPO(ModelEvaluator):
     def __init__(self,config=None,LHS_g=10):
-        if config is None:
-            self.hyperparameters, self.model, self.experiment = load_config()
-        else:
-            self.hyperparameters = config["hyperparameters"]
-            self.model = config["model"]
-            self.experiment = config["experiment"]
-        self.hp_key = list(self.hyperparameters.keys())
+        ModelEvaluator.__init__(self, config=config)
         self.dim = len(self.hyperparameters)
         self.lower_bounds = torch.tensor([self.hyperparameters[key]["min"] for key in self.hyperparameters.keys()])
         self.upper_bounds = torch.tensor([self.hyperparameters[key]["max"] for key in self.hyperparameters.keys()])
@@ -89,34 +84,6 @@ class BO_HPO():
             return y
         elif name == "Himmelblau":
             return (((x[0]**2+x[1]-11)**2) + (((x[0]+x[1]**2-7)**2)))
-
-
-    def evaluate(self,x, phase = "optimization"):
-        # convert x into hyperparameters
-        hyperparameters = {}
-        for i in range(len(self.hyperparameters.keys())):
-            key = self.hp_key[i]
-            hyperparameters[key] = convert(x,i, self.hyperparameters)
-
-        meta_data = {"date":datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                     "algorithm" : "BO",
-                     "phase" : phase,
-        }
-        # save hyperparameters
-        HP = {"hyperparameters" : hyperparameters,
-              "meta_data" : meta_data}
-        
-        # writing in the file   
-        export_file = "optimization/export.json"
-        with open(export_file, "a+") as outfile:
-            json.dump(HP, outfile)
-            outfile.write('\n')
-
-        training()
-        result = evaluate()
-        add_results(results=result,) 
-
-        return result["mmlu"]
 
 
     def run(self,n = 10):

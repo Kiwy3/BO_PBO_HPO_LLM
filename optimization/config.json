@@ -17,12 +17,14 @@
         "nb_device": 4,
         "epochs": 1,
         "device": "cuda",
-        "fast_run": true,
-        "eval_limit": 50,
+        "fast_run": false,
+        "eval_limit":0,
         "calls": 100,
         "historic_file": "optimization/historic/bo.json",
+        "lora_path" : "checkpoints/lora",
         "model_name": "tiny-llama-1.1b",
-        "tasks": ["mmlu"]
+        "tasks": ["hellaswag"],
+        "dataset" : "yahma/alpaca-cleaned"
     }
 
 }
