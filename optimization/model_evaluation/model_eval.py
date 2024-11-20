@@ -74,6 +74,19 @@ class ModelEvaluator:
         self.model = config["models"]
         self.experiment = config["experiment"]
 
+    def add_results(self, results):
+
+        with open(self.experiment["historic_file"], 'r+') as f:
+            lines = f.readlines()
+            last_line = lines[-1]
+            last_line_data = json.loads(last_line)
+            last_line_data["meta_data"]["end_date"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            last_line_data['results'] = results
+            lines[-1] = json.dumps(last_line_data) + '\n'
+            f.seek(0)
+            f.writelines(lines)
+            f.truncate()
+
     def convert (self,x,i):
         key = list(self.hp_key)[i]
         type = self.hyperparameters[key]["type"]
@@ -100,7 +113,7 @@ class ModelEvaluator:
             key = self.hp_key[i]
             hyperparameters[key] = self.convert(x,i)
 
-        meta_data = {"date":datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        meta_data = {"start_date":datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                      "algorithm" : "BO",
                      "phase" : phase,
         }
@@ -109,7 +122,7 @@ class ModelEvaluator:
               "meta_data" : meta_data}
         
         # writing in the file   
-        export_file = "optimization/export.json"
+        export_file = self.experiment["historic_file"]
         with open(export_file, "a+") as outfile:
             json.dump(HP, outfile)
             outfile.write('\n')
