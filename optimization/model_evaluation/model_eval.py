@@ -9,7 +9,7 @@ from model_evaluation.eval import task_evaluate
 from utils import add_results """
 
 class ModelEvaluator:
-    def __init__(self, config=None):
+    def __init__(self, config=None, config_file= "optimization/config.json"):
         """
         Initialize ModelEvaluator object.
 
@@ -30,7 +30,7 @@ class ModelEvaluator:
             Names of hyperparameters.
         """
         if config is None:
-            self.load_config()
+            self.load_config(config_file=config_file)
         else:
             self.hyperparameters = config["hyperparameters"]
             self.models = config["models"]
@@ -67,8 +67,8 @@ class ModelEvaluator:
                 res[task] =  results[task]["acc,none"]
             return res
     
-    def load_config(self):    
-        with open("optimization/config.json") as f:
+    def load_config(self,config_file):    
+        with open(config_file) as f:
             config = json.load(f)
         self.hyperparameters = config["hyperparameters"]
         self.model = config["models"]
