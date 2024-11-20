@@ -16,22 +16,31 @@ from botorch.optim import optimize_acqf
 from botorch.acquisition.analytic import LogExpectedImprovement
 
 class BO_HPO(ModelEvaluator):
-    def __init__(self,config=None,LHS_g=10):
+    def __init__(self,config=None):
         ModelEvaluator.__init__(self, config=config)
         self.dim = len(self.hyperparameters)
         self.lower_bounds = torch.tensor([self.hyperparameters[key]["min"] for key in self.hyperparameters.keys()])
         self.upper_bounds = torch.tensor([self.hyperparameters[key]["max"] for key in self.hyperparameters.keys()])
         self.bounds = torch.stack((self.lower_bounds, self.upper_bounds)).to(torch.double)
+
+    def init(self, LHS_g=10):
         if Path(self.experiment["historic_file"]).is_file():
             self.X = self.load_points()
         else:
             print("No historic file, Sampling with LHS")
+            #create file
+            f = open(self.experiment["historic_file"], "w")
+            f.close()
+            #Define point to evaluate
             self.X = torch.tensor(self.LHS_sampling(g=LHS_g))
             self.Y = []
             for x in self.X:
                 self.Y.append([self.evaluate(x,phase="sampling")])
             self.Y = torch.tensor(self.Y,dtype=torch.double)
 
+
+    def create_file(self):
+        pass
 
     def LHS_sampling(self,g=10):
         from scipy.stats.qmc import LatinHypercube
