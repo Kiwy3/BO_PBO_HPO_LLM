@@ -15,11 +15,6 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 from botorch.optim import optimize_acqf
 from botorch.acquisition.analytic import LogExpectedImprovement
 
-def load_config():    
-    with open("optimization/config.json") as f:
-        config = json.load(f)
-    return config["hyperparameters"], config["models"], config["experiment"]
-
 class BO_HPO(ModelEvaluator):
     def __init__(self,config=None,LHS_g=10):
         ModelEvaluator.__init__(self, config=config)
