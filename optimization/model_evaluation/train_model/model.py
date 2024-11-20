@@ -102,10 +102,6 @@ class LitLLM(L.LightningModule):
         state_dict = torch.load(f"checkpoints/{self.model_id}/lit_model.pth", mmap=True, weights_only=False)
         self.model.load_state_dict(state_dict, strict=False)
 
-        for n, p in self.model.named_parameters():
-            if "lora_A" in n:
-                self.old_lora_A.append(p)
-
         
 
     def training_step(self, batch):
