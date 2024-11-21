@@ -21,6 +21,7 @@
         "device": "cuda",
         "fast_run": false,
         "eval_limit":0,
+        "strategy": "ddp_spawn",
         "calls": 100,
         "historic_file": "optimization/export.json",
         "lora_path" : "checkpoints/lora",
