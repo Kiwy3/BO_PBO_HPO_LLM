@@ -71,7 +71,8 @@ def convert_and_evaluate(
         )
         return
 
-    checkpoint_dir = auto_download_checkpoint(model_name=checkpoint_dir, access_token=access_token)
+    #checkpoint_dir = auto_download_checkpoint(model_name=checkpoint_dir, access_token=access_token)
+    # it's used for downloading a model if needed => not needed in our case
     pprint(locals())
 
     if not (isinstance(batch_size, int) and batch_size > 0) and not (isinstance(batch_size, str) and batch_size.startswith("auto")):
@@ -90,7 +91,7 @@ def convert_and_evaluate(
 
     save_filepath = out_dir / Path("results.json") if save_filepath is None else Path(save_filepath)
 
-    model_path = out_dir / "pytorch_model.bin"
+    """ model_path = out_dir / "pytorch_model.bin"
     if not model_path.exists() or force_conversion:
         copy_config_files(source_dir=checkpoint_dir, out_dir=out_dir)
         #convert_lit_checkpoint(checkpoint_dir=checkpoint_dir, output_dir=out_dir)
@@ -101,7 +102,7 @@ def convert_and_evaluate(
         # So we're `torch.load`-ing and `torch.sav`-ing it again to work around this.
         state_dict = torch.load(out_dir / "model.pth"   )
         torch.save(state_dict, model_path)
-        os.remove(out_dir / "model.pth")
+        os.remove(out_dir / "model.pth") """
 
     from lm_eval.models.huggingface import HFLM
 

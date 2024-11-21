@@ -1,9 +1,10 @@
 import json
 import math
 import datetime
+import torch
+import os
 
 from model_evaluation import training
-from model_evaluation.utils import add_results
 from model_evaluation.eval import task_evaluate
 """ from __init__ import training, evaluate
 from utils import add_results """
@@ -30,12 +31,38 @@ class ModelEvaluator:
             Names of hyperparameters.
         """
         if config is None:
-            self.load_config(config_file=config_file)
+            self.__load_config(config_file=config_file)
         else:
             self.hyperparameters = config["hyperparameters"]
             self.models = config["models"]
             self.experiment = config["experiment"]
         self.hp_key = list(self.hyperparameters.keys())
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "garbage_collection_threshold:0.3"
+
+    def __load_config(self,config_file):    
+        """
+        Load configuration from a JSON file.
+
+        Parameters
+        ----------
+        config_file : str
+            Path to the configuration file.
+
+        Notes
+        -----
+        The configuration file should contain three keys: "hyperparameters",
+        "models", and "experiment". The value of "hyperparameters" should be a
+        dictionary with hyperparameter names as keys and a dictionary with
+        "min", "max", and "type" as values. The value of "models" should be a
+        dictionary with model names as keys and a string as value. The value
+        of "experiment" should be a dictionary with experiment settings as
+        values.
+        """
+        with open(config_file) as f:
+            config = json.load(f)
+        self.hyperparameters = config["hyperparameters"]
+        self.model = config["models"]
+        self.experiment = config["experiment"]
 
 
     def validate(self):
@@ -67,14 +94,9 @@ class ModelEvaluator:
                 res[task] =  results[task]["acc,none"]
             return res
     
-    def load_config(self,config_file):    
-        with open(config_file) as f:
-            config = json.load(f)
-        self.hyperparameters = config["hyperparameters"]
-        self.model = config["models"]
-        self.experiment = config["experiment"]
 
-    def add_results(self, results):
+
+    def __add_results(self, results):
 
         with open(self.experiment["historic_file"], 'r+') as f:
             lines = f.readlines()
@@ -87,7 +109,7 @@ class ModelEvaluator:
             f.writelines(lines)
             f.truncate()
 
-    def convert (self,x,i):
+    def __variable_conversion (self,x,i):
         key = list(self.hp_key)[i]
         type = self.hyperparameters[key]["type"]
         if type == "int":
@@ -108,10 +130,11 @@ class ModelEvaluator:
         Returns:
             float: Result of the evaluation.
         """
+        #torch.set_float32_matmul_precision('medium' | 'high')
         hyperparameters = {}
         for i in range(len(self.hyperparameters.keys())):
             key = self.hp_key[i]
-            hyperparameters[key] = self.convert(x,i)
+            hyperparameters[key] = self.__variable_conversion(x,i)
 
         meta_data = {"start_date":datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                      "algorithm" : "BO",
@@ -129,7 +152,7 @@ class ModelEvaluator:
 
         training()
         result = self.validate()
-        add_results(results=result,) 
+        self.__add_results(results=result,) 
 
         return result[self.tasks[0]]
     

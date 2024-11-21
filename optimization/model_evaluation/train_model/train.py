@@ -13,7 +13,35 @@ from model_evaluation.train_model import LLM_model
 from model_evaluation.train_model import LLMDataModule
 from model_evaluation.utils import load_hyperparameters
 
+# lib for conversion
+from litgpt.utils import extend_checkpoint_dir, incremental_save, lazy_load
+from litgpt import Config
+import gc
+from functools import partial
+from model_evaluation.eval.model_conversion import copy_weights_llama,check_conversion_supported
 
+@torch.inference_mode()
+def convert_model(model, output_dir: Path,model_id) -> None:
+    checkpoint_dir = Path("checkpoint"+model_id)
+    config = Config.from_file(checkpoint_dir / "model_config.yaml")
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / "pytorch_model.bin"
+
+    untie_weights = "Gemma" in config.name
+    copy_fn = partial(copy_weights_llama, config, untie_weights=untie_weights)
+
+
+    # initialize a new empty state dict to hold our new weights
+    sd = {}
+    with incremental_save(output_path) as saver:
+        #lit_weights = lazy_load(checkpoint_dir / "lit_model.pth")
+        #lit_weights = lit_weights.get("state_dict", lit_weights)
+        lit_weights = model.get("model", model)
+        check_conversion_supported(lit_weights)
+        copy_fn(sd, lit_weights, saver=saver)
+        gc.collect()
+        saver.save(sd)
 
 def training():
 
@@ -75,7 +103,7 @@ def training():
             strategy=strategy,
             accumulate_grad_batches=grad_batches,
             precision="16-mixed",
-            enable_checkpointing=False,
+            enable_checkpointing=True,
             #plugins=quantize_plug(),
         )
     
