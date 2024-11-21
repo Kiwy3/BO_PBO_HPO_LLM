@@ -9,7 +9,6 @@ import lightning as L
 
 # custom librairies
 from model_evaluation.train_model import LLM_model, merge_lora_weights, lora_filter
-from model_evaluation.train_model import LLM_model
 from model_evaluation.train_model import LLMDataModule
 from model_evaluation.utils import load_hyperparameters
 
@@ -86,14 +85,13 @@ def training():
     data_module = LLMDataModule(
         val_split_fraction=0.05,  # Adjust as needed
         repo_id=dataset
-
-)
+    )
     data_module.connect(
         tokenizer=litgpt.Tokenizer(f"checkpoints/{model_id}"),
         batch_size=1,
         max_seq_length=512
     )
-    data_module.setup()
+    data_module.setup() # Load dataset, split into train and validation
 
     # Configure Trainer
     trainer = L.Trainer(

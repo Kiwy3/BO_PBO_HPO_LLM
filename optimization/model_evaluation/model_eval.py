@@ -2,12 +2,16 @@ import json
 import math
 import datetime
 import torch
+import lightning as L
+import litgpt
 import os
+from pathlib import Path
 
 from model_evaluation import training
 from model_evaluation.eval import task_evaluate
-""" from __init__ import training, evaluate
-from utils import add_results """
+
+from model_evaluation.train_model import LLM_model, merge_lora_weights, lora_filter
+from model_evaluation.train_model import LLMDataModule
 
 class ModelEvaluator:
     def __init__(self, config=None, config_file= "optimization/config.json"):
@@ -36,6 +40,8 @@ class ModelEvaluator:
             self.hyperparameters = config["hyperparameters"]
             self.models = config["models"]
             self.experiment = config["experiment"]
+        self.model_id = self.experiment["model_id"]
+        self.model_name = self.models[self.model_id] 
         self.hp_key = list(self.hyperparameters.keys())
         os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "garbage_collection_threshold:0.3"
 
@@ -63,6 +69,53 @@ class ModelEvaluator:
         self.hyperparameters = config["hyperparameters"]
         self.model = config["models"]
         self.experiment = config["experiment"]
+
+    def training(self,x):
+        # convert hyperparameters to variables
+        learning_rate, lora_rank, grad_batches, lora_alpha, lora_dropout, weight_decay = x
+
+        # data module management
+        data_loader = LLMDataModule(
+            val_split_fraction=0.05,  # Adjust as needed
+            repo_id=self.experiment["dataset"], 
+        )
+        data_loader.connect(
+            tokenizer=litgpt.Tokenizer(f"checkpoints/{self.experiment['model_id']}"),
+            batch_size=1,
+            max_seq_length=512
+        )   
+
+        # create a trainer instance 
+        trainer = L.Trainer(
+            devices=self.experiment["nb_device"],
+            max_epochs=self.experiment["epochs"] if self.experiment["epochs"] > 0 else 1,
+            max_steps=20 if self.experiment["fast_run"] else 20000,
+            strategy=self.experiment["strategy"],
+            accumulate_grad_batches=grad_batches,
+            precision="16-mixed",
+            enable_checkpointing=True,
+            #plugins=quantize_plug(),
+        )
+    
+
+        # model configuration
+        model = LLM_model(
+            low_rank=lora_rank, 
+            rate=learning_rate,
+            l_alpha=lora_alpha,
+            l_dropout=lora_dropout,
+            weight_decay = weight_decay,
+            model_name=self.model_name,
+            model_id=self.model_id        
+        ).to(self.experiment["device"])
+        trainer.fit(model, datamodule=data_loader)
+
+        # Saving merged model
+        print("\t merging and saving")
+        merge_lora_weights(model.model)
+        state_dict = {k.replace("linear.", ""): v for k, v in model.model.state_dict().items() if not lora_filter(k, v)}
+        save_path = Path("checkpoints/lora") / "lit_model.pth"
+        torch.save(state_dict, save_path)
 
 
     def validate(self):
