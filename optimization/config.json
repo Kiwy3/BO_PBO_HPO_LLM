@@ -10,7 +10,6 @@
     "models":{
         "TinyLlama/TinyLlama-1.1B-Chat-v1.0":"tiny-llama-1.1b",
         "meta-llama/Meta-Llama-3.1-8B":"Llama-3.1-8B",
-        "TinyLlama/TinyLlama_v1.1":"tiny-llama-1.1b",
         "meta-llama/Llama-3.2-3B":"Llama-3.2-3B"
 
     },
