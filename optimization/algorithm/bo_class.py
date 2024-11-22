@@ -38,10 +38,6 @@ class BO_HPO(ModelEvaluator):
                 self.Y.append([self.evaluate(x,phase="sampling")])
             self.Y = torch.tensor(self.Y,dtype=torch.double)
 
-
-    def create_file(self):
-        pass
-
     def LHS_sampling(self,g=10):
         from scipy.stats.qmc import LatinHypercube
         LHS = LatinHypercube(d=self.dim)

@@ -7,7 +7,6 @@ import litgpt
 import os
 from pathlib import Path
 
-from model_evaluation import training
 from model_evaluation.eval import task_evaluate
 
 from model_evaluation.train_model import LLM_model, merge_lora_weights, lora_filter
@@ -70,8 +69,28 @@ class ModelEvaluator:
         self.model = config["models"]
         self.experiment = config["experiment"]
 
+
     def training(self,x):
         # convert hyperparameters to variables
+        """
+        Train a model with the given hyperparameters.
+
+        Parameters
+        ----------
+        x : list
+            A list of hyperparameters: learning rate, LoRA rank, gradient
+            batches, LoRA alpha, LoRA dropout, and weight decay.
+
+        Notes
+        -----
+        The function trains a model using the given hyperparameters, saves the
+        trained model with the merged weights, and returns the evaluation
+        results. The model is trained on the dataset specified in the
+        experiment configuration. The model is trained on the specified number
+        of devices for the specified number of epochs. If the experiment is set
+        to "fast_run", the model is trained for 20 steps; otherwise, it is
+        trained for 20000 steps.
+        """
         learning_rate, lora_rank, grad_batches, lora_alpha, lora_dropout, weight_decay = x
 
         # data module management
@@ -150,7 +169,14 @@ class ModelEvaluator:
 
 
     def __add_results(self, results):
+        """
+        Updates the last line of the historic file with the given results.
 
+        Parameters
+        ----------
+        results : dict
+            Dictionary with task names as keys and accuracy on that task as values.
+        """
         with open(self.experiment["historic_file"], 'r+') as f:
             lines = f.readlines()
             last_line = lines[-1]
@@ -163,6 +189,21 @@ class ModelEvaluator:
             f.truncate()
 
     def __variable_conversion (self,x,i):
+        """
+        Convert a variable from float to the type specified in the hyperparameter definitions.
+
+        Parameters
+        ----------
+        x : float
+            Value to convert.
+        i : int
+            Index of the variable in the hyperparameter list.
+
+        Returns
+        -------
+        Union[int, float]
+            The converted value.
+        """
         key = list(self.hp_key)[i]
         type = self.hyperparameters[key]["type"]
         if type == "int":
@@ -203,13 +244,28 @@ class ModelEvaluator:
             json.dump(HP, outfile)
             outfile.write('\n')
 
-        training()
+        self.training(
+            list(hyperparameters.values())
+        )
         result = self.validate()
         self.__add_results(results=result,) 
 
         return result[self.tasks[0]]
     
     def __call__(self, x):
+        """
+        Call the ModelEvaluator instance as a function to evaluate the model, to be compatible with Zellij
+
+        Parameters
+        ----------
+        x : list
+            Hyperparameters to evaluate.
+
+        Returns
+        -------
+        float
+            Result of the evaluation for the first task.
+        """
         return self.evaluate(x)
 
 if __name__ == "__main__":
