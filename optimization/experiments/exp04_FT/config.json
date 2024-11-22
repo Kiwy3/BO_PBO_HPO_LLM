@@ -15,7 +15,7 @@
     },
     "experiment": {
         "model_id": "meta-llama/Llama-3.2-3B",
-        "model_name": "tiny-llama-1.1b",
+        "model_name": "Llama-3.2-3B",
         "nb_device": 4,
         "epochs": 1,
         "device": "cuda",
@@ -23,9 +23,9 @@
         "eval_limit":0,
         "strategy": "ddp_spawn",
         "calls": 100,
-        "historic_file": "optimization/export.json",
+        "historic_file": "optimization/experiments/exp04_FT/export.json",
         "lora_path" : "checkpoints/lora",
-        "tasks": ["hellaswag"],
+        "tasks": ["mmlu"],
         "dataset" : "yahma/alpaca-cleaned"
     }
 
