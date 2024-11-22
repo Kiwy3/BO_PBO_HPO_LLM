@@ -34,7 +34,7 @@ class ModelEvaluator:
             Names of hyperparameters.
         """
         if config is None:
-            self.__load_config(config_file=config_file)
+            self.load_config(config_file=config_file)
         else:
             self.hyperparameters = config["hyperparameters"]
             self.models = config["models"]
@@ -44,7 +44,7 @@ class ModelEvaluator:
         self.hp_key = list(self.hyperparameters.keys())
         os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "garbage_collection_threshold:0.3"
 
-    def __load_config(self,config_file):    
+    def load_config(self,config_file):    
         """
         Load configuration from a JSON file.
 
@@ -66,8 +66,9 @@ class ModelEvaluator:
         with open(config_file) as f:
             config = json.load(f)
         self.hyperparameters = config["hyperparameters"]
-        self.model = config["models"]
+        self.models = config["models"]
         self.experiment = config["experiment"]
+        return config
 
 
     def training(self,x):
@@ -106,7 +107,7 @@ class ModelEvaluator:
 
         # create a trainer instance 
         trainer = L.Trainer(
-            devices=self.experiment["nb_device"],
+            devices=self.experiment["nb_device"] if self.experiment["nb_device"] <= torch.cuda.device_count() else torch.cuda.device_count(),
             max_epochs=self.experiment["epochs"] if self.experiment["epochs"] > 0 else 1,
             max_steps=20 if self.experiment["fast_run"] else 20000,
             strategy=self.experiment["strategy"],
