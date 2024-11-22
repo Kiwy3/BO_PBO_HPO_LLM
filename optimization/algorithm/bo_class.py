@@ -52,10 +52,10 @@ class BO_HPO(ModelEvaluator):
             points[:,point] = points[:,point]*(upper_bound-lower_bound)+lower_bound
         return points
 
-    def load_points(self):
+    def load_points(self): #When there is a historic file
         data = pd.read_json(self.experiment["historic_file"],lines=True)
         data = data[data.results.notnull()]
-        Y = data.results.apply(lambda x: [x["mmlu"]])
+        Y = data.results.apply(lambda x: [x[self.experiment["tasks"][0]]])
         Y = torch.tensor(Y,dtype=torch.double)
         X = pd.json_normalize(data["hyperparameters"])
         X = torch.tensor(X.values,dtype=torch.double)
