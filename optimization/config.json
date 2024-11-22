@@ -14,8 +14,8 @@
 
     },
     "experiment": {
-        "model_id": "meta-llama/Llama-3.2-3B",
-        "model_name": "Llama-3.2-3B",
+        "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+        "model_name": "tiny-llama-1.1b",
         "nb_device": 4,
         "epochs": 1,
         "device": "cuda",
@@ -25,7 +25,7 @@
         "calls": 100,
         "historic_file": "optimization/export.json",
         "lora_path" : "checkpoints/lora",
-        "tasks": ["mmlu"],
+        "tasks": ["hellaswag"],
         "dataset" : "yahma/alpaca-cleaned"
     }
 
