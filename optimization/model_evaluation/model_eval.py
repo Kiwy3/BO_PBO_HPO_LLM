@@ -113,7 +113,7 @@ class ModelEvaluator:
             strategy=self.experiment["strategy"],
             accumulate_grad_batches=grad_batches,
             precision="16-mixed",
-            enable_checkpointing=True,
+            enable_checkpointing=False,
             #plugins=quantize_plug(),
         )
     
