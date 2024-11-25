@@ -47,7 +47,7 @@ Z = himmelblau([X, Y])["obj"]
 
 map = ax.contourf(X, Y, Z, cmap="plasma", levels=100)
 fig.colorbar(map)
-
+df = df.iloc[:9]
 plt.scatter(df["float_1"],df["float_2"],c="cyan",s=1)
 for i in range(len(df)):
     plt.text(df["float_1"].iloc[i],df["float_2"].iloc[i],str(i))
@@ -100,7 +100,11 @@ for j in range(3,8,2):
             print(lb.float_2,plot_lb,plot_ub)
         plt.axvline(lb.float_1+gap/4,plot_lb,plot_ub,color="red")
         plt.axvline(lb.float_1+3*gap/4,plot_lb,plot_ub,color="red")
-    
+
+plt.title("Simultaneous Optimistic Optimization")
+plt.xlabel("dimension 1")
+plt.ylabel("dimension 2")    
+plt.savefig("plots/soo.jpg")
 
 plt.show()
 

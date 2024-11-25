@@ -67,6 +67,11 @@ for x in x_list:
 plt.plot(x_list,y_mean,c="black",label="mean")
 plt.fill_between(x_list,y_lb,y_ub,alpha=0.2,label="uncertainty")
 plt.legend()
+plt.title("Gaussian Process")
+plt.xlabel("x")
+plt.ylabel("f(x)")
+plt.savefig("plots/gaussian_process.jpg")
+
 
 
 
