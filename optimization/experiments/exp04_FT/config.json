@@ -19,14 +19,16 @@
         "nb_device": 4,
         "epochs": 1,
         "device": "cuda",
-        "fast_run": false,
+        "fast_run": true,
         "eval_limit":0,
         "strategy": "ddp_spawn",
         "calls": 100,
+        "tasks": ["hellaswag"],
+        "dataset" : "yahma/alpaca-cleaned",
+        "experiment_path": "optimization/experiments/exp04_FT",
+        "eval_path": "optimization/experiments/exp04_FT/evaluate",
         "historic_file": "optimization/experiments/exp04_FT/export.json",
-        "lora_path" : "checkpoints/lora",
-        "tasks": ["mmlu"],
-        "dataset" : "yahma/alpaca-cleaned"
+        "lora_path" : "checkpoints/lora" 
     }
 
 }

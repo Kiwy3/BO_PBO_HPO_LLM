@@ -103,15 +103,13 @@ def check_conversion_supported(lit_weights: Dict[str, torch.Tensor]) -> None:
         raise NotImplementedError("Converting adapter models is not supported.")
 
 @torch.inference_mode()
-def convert_checkpoint(checkpoint_dir: Path, output_dir: Path) -> None:
+def convert_checkpoint(conv_dir: Path) -> None:
     """Convert a LitGPT trained checkpoint into a Hugging Face Transformers checkpoint."""
-    checkpoint_dir = extend_checkpoint_dir(checkpoint_dir)
     pprint(locals())
 
-    config = Config.from_file(checkpoint_dir / "model_config.yaml")
+    config = Config.from_file(conv_dir / "model_config.yaml")
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / "model.pth"
+    output_path = conv_dir / "model.pth"
 
     untie_weights = "Gemma" in config.name
     copy_fn = partial(copy_weights_llama, config, untie_weights=untie_weights)
@@ -120,7 +118,7 @@ def convert_checkpoint(checkpoint_dir: Path, output_dir: Path) -> None:
     # initialize a new empty state dict to hold our new weights
     sd = {}
     with incremental_save(output_path) as saver:
-        lit_weights = lazy_load(checkpoint_dir / "lit_model.pth")
+        lit_weights = lazy_load(conv_dir / "lit_model_lora.pth")
         #lit_weights = lit_weights.get("state_dict", lit_weights)
         lit_weights = lit_weights.get("model", lit_weights)
         check_conversion_supported(lit_weights)

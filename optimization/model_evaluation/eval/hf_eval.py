@@ -27,9 +27,9 @@ def prepare_results(results, save_filepath, print_results=True, save_results=Tru
         save_filepath.open("w", encoding="utf-8").write(json_result)
 
 def convert_and_evaluate(
-    checkpoint_dir: Path,
+    exp_dir: Path,
+    model_id: str,
     tasks: Optional[str] = None,
-    out_dir: Optional[Path] = None,
     force_conversion: bool = False,
     num_fewshot: Optional[int] = None,
     batch_size: Union[int, str] = 1,
@@ -70,8 +70,8 @@ def convert_and_evaluate(
             "\nTo search for a specific task, use `litgpt evaluate list | grep task_name`."
         )
         return
-
-    checkpoint_dir = auto_download_checkpoint(model_name=checkpoint_dir, access_token=access_token)
+    
+    #checkpoint_dir = auto_download_checkpoint(model_name=checkpoint_dir, access_token=access_token)
     # it's used for downloading a model if needed => not needed in our case
     pprint(locals())
 
@@ -82,13 +82,11 @@ def convert_and_evaluate(
 
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    if out_dir is None:
-        out_dir = checkpoint_dir / "evaluate"
-    else:
-        out_dir = Path(out_dir)
+    
+    # path management
+    checkpoint_dir = Path(f"checkpoints/{model_id}/")
+    out_dir = Path(f"{exp_dir}/evaluate")
     out_dir.mkdir(parents=True, exist_ok=True)
-
     save_filepath = out_dir / Path("results.json") if save_filepath is None else Path(save_filepath)
 
     model_path = out_dir / "pytorch_model.bin"
@@ -96,7 +94,7 @@ def convert_and_evaluate(
         copy_config_files(source_dir=checkpoint_dir, out_dir=out_dir)
         #convert_lit_checkpoint(checkpoint_dir=checkpoint_dir, output_dir=out_dir)
         from .model_conversion import convert_checkpoint
-        convert_checkpoint(checkpoint_dir=checkpoint_dir, output_dir=out_dir)
+        convert_checkpoint(conv_dir=out_dir)
         # Hack: LitGPT's conversion doesn't save a pickle file that is compatible to be loaded with
         # `torch.load(..., weights_only=True)`, which is a requirement in HFLM.
         # So we're `torch.load`-ing and `torch.sav`-ing it again to work around this.

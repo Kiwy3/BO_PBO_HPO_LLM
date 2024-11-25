@@ -23,10 +23,12 @@
         "eval_limit":0,
         "strategy": "ddp_spawn",
         "calls": 100,
-        "historic_file": "optimization/export.json",
-        "lora_path" : "checkpoints/lora",
         "tasks": ["hellaswag"],
-        "dataset" : "yahma/alpaca-cleaned"
+        "dataset" : "yahma/alpaca-cleaned",
+        "experiment_path": "optimization",
+        "eval_path": "optimization/evaluate",
+        "historic_file": "optimization/export.json",
+        "lora_path" : "checkpoints/lora"        
     }
 
 }
