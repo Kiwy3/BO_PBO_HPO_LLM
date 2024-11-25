@@ -1,10 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-folder_path = "experiments/exp03_bo_LHS/"
+folder_path = "exp03_bo_LHS/"
 task = "hellaswag"
 
-data = pd.read_json(folder_path+"bo.json",lines=True)
+data = pd.read_json(folder_path+"export.json",lines=True)
 X = pd.json_normalize(data["hyperparameters"])
 Y = data["results"].apply(lambda x: x[task])
 
