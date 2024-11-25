@@ -25,7 +25,7 @@ class BO_HPO(ModelEvaluator):
 
     def init(self, LHS_g=10):
         if Path(self.experiment["historic_file"]).is_file():
-            self.X = self.load_points()
+            self.X, self.Y = self.load_points()
         else:
             print("No historic file, Sampling with LHS")
             #create file
@@ -55,6 +55,7 @@ class BO_HPO(ModelEvaluator):
         Y = torch.tensor(Y,dtype=torch.double)
         X = pd.json_normalize(data["hyperparameters"])
         X = torch.tensor(X.values,dtype=torch.double)
+        return X, Y
 
     def new_point(self):
         gp = SingleTaskGP(
