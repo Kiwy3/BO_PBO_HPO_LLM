@@ -2,7 +2,7 @@
 #OAR -q testing
 #OAR -p chuc
 #OAR -l walltime=15
-#OAR -n BO_LLM_FT
+#OAR -n epoch_sensitivity_llm
 #OAR -O OAR_BO_%jobid%.out
 #OAR -E OAR_BO_%jobid%.err
 
