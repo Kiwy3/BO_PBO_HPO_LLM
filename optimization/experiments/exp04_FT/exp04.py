@@ -18,6 +18,7 @@ if  __name__ == "__main__":
     config = evaluator.load_config("optimization/experiments/exp04_FT/config.json")
     print("config loaded : ",config)
     for i in epoch_list:
-        config["experiment"]["epoch"] = i
+        config["experiment"]["epochs"] = i+1
         evaluator = ModelEvaluator(config=config)
+        print(evaluator.experiment)
         res = evaluator.evaluate(standard_hp)
