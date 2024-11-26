@@ -22,10 +22,11 @@
         "eval_limit":0,
         "strategy": "ddp_spawn",
         "calls": 100,
-        "historic_file": "experiments/exp05_bo_space/export.json",
-        "lora_path" : "checkpoints/lora",
-        "tasks": ["hellaswag"],
-        "dataset" : "yahma/alpaca-cleaned"
+        "tasks": ["mmlu"],
+        "dataset" : "yahma/alpaca-cleaned",
+        "experiment_path": "optimization/experiments/exp05_bo_space",
+        "eval_path": "optimization/experiments/exp05_bo_space/evaluate",
+        "historic_file": "optimization/experiments/exp05_bo_space/export.json",
+        "lora_path" : "checkpoints/lora" 
     }
-
 }

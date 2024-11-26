@@ -5,7 +5,6 @@
 #OAR -n extend_search_space
 #OAR -O exp05_%jobid%.out
 #OAR -E exp05_%jobid%.err
-#OAR --notify "mail:nathan.davouse@inria.fr"
 
 
 hostname
