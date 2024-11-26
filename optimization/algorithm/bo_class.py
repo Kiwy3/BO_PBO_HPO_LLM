@@ -16,8 +16,8 @@ from botorch.optim import optimize_acqf
 from botorch.acquisition.analytic import LogExpectedImprovement
 
 class BO_HPO(ModelEvaluator):
-    def __init__(self,config=None):
-        ModelEvaluator.__init__(self, config=config)
+    def __init__(self,config_file,config=None):
+        ModelEvaluator.__init__(self, config=config, config_file=config_file)
         self.dim = len(self.hyperparameters)
         self.lower_bounds = torch.tensor([self.hyperparameters[key]["min"] for key in self.hyperparameters.keys()])
         self.upper_bounds = torch.tensor([self.hyperparameters[key]["max"] for key in self.hyperparameters.keys()])
