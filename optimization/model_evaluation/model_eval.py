@@ -136,8 +136,9 @@ class ModelEvaluator:
         merge_lora_weights(model.model)
         state_dict = {k.replace("linear.", ""): v for k, v in model.model.state_dict().items() if not lora_filter(k, v)}
         
-        save_path = Path(self.exp_path) / "evaluate/lit_model_lora.pth"
-        save_path.mkdir(parents=True, exist_ok=True)
+        save_dir = Path(self.exp_path) / "evaluate/"
+        save_dir.mkdir(parents=True, exist_ok=True)
+        save_path = save_dir / f"lit_model_lora.pth"
         torch.save(state_dict, save_path)
 
 
@@ -154,12 +155,12 @@ class ModelEvaluator:
         eval_limit = self.experiment["eval_limit"]
         if eval_limit == 0:
             eval_limit = None
-        results = task_evaluate(self.exp_path,
+        results = task_evaluate(
+                            exp_dir =self.exp_path,
                             model_id=self.model_id,
                             tasks=self.tasks[0] if len(self.tasks) == 1 else self.tasks,
                             limit=eval_limit,
-                            force_conversion=True,
-                            out_dir="eval/")
+                            force_conversion=True)
         res = {}
         try:
             for task in self.tasks:
