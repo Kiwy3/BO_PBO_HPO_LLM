@@ -43,6 +43,8 @@ class ModelEvaluator:
         self.model_name = self.models[self.model_id]
         self.exp_path = self.experiment["experiment_path"]
         self.hp_key = list(self.hyperparameters.keys())
+        with open(self.experiment["historic_file"], 'w') as f:
+            pass
         os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "garbage_collection_threshold:0.3"
 
     def load_config(self,config_file):    
