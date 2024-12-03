@@ -19,7 +19,7 @@
         "nb_device": 4,
         "epochs": 1,
         "device": "cuda",
-        "fast_run": false,
+        "fast_run": true,
         "eval_limit":0,
         "strategy": "ddp_spawn",
         "calls": 100,
