@@ -221,7 +221,7 @@ class ModelEvaluator:
         elif type == "float":
             return float(x[i])
 
-    def evaluate(self,x, phase = "optimization")->float:
+    def evaluate(self,x, phase = "optimization",config_keys=None)->float:
         """
         Evaluate the model with the given hyperparameters.
 
@@ -239,9 +239,12 @@ class ModelEvaluator:
             hyperparameters[key] = self.__variable_conversion(x,i)
 
         meta_data = {"start_date":datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                     "algorithm" : "BO",
+                     "algorithm" : self.experiment.get("algorithm", "BO"),
                      "phase" : phase,
         }
+        if config_keys is not None:
+            for key in config_keys:
+                meta_data[key] = self.experiment[key]
         # save hyperparameters
         HP = {"hyperparameters" : hyperparameters,
               "meta_data" : meta_data}
@@ -256,7 +259,7 @@ class ModelEvaluator:
             list(hyperparameters.values())
         )
         result = self.validate()
-        self.__add_results(results=result,) 
+        self.__add_results(results=result,)
 
         return result[self.tasks[0]]
     
