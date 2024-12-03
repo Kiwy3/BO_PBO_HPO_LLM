@@ -95,6 +95,7 @@ def convert_and_evaluate(
         #convert_lit_checkpoint(checkpoint_dir=checkpoint_dir, output_dir=out_dir)
         from .model_conversion import convert_checkpoint
         convert_checkpoint(conv_dir=out_dir)
+        os.remove(out_dir / "lit_model_lora.pth")
         # Hack: LitGPT's conversion doesn't save a pickle file that is compatible to be loaded with
         # `torch.load(..., weights_only=True)`, which is a requirement in HFLM.
         # So we're `torch.load`-ing and `torch.sav`-ing it again to work around this.
@@ -119,6 +120,8 @@ def convert_and_evaluate(
         numpy_random_seed=seed,
         torch_random_seed=seed,
     )
+
+    os.remove(out_dir / "pytorch_model.bin")
 
     prepare_results(
         results=results,
