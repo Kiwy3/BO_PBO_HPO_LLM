@@ -24,7 +24,8 @@ class BO_HPO(ModelEvaluator):
         self.bounds = torch.stack((self.lower_bounds, self.upper_bounds)).to(torch.double)
 
     def init(self, LHS_g=10):
-        if Path(self.experiment["historic_file"]).is_file():
+        if Path(self.experiment["historic_file"]).is_file() and Path(self.experiment["historic_file"]).stat().st_size != 0:
+            print("Loading historic file")
             self.X, self.Y = self.load_points()
         else:
             print("No historic file, Sampling with LHS")
