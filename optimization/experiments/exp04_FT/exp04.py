@@ -21,4 +21,4 @@ if  __name__ == "__main__":
         config["experiment"]["epochs"] = i+1
         evaluator = ModelEvaluator(config=config)
         print(evaluator.experiment)
-        res = evaluator.evaluate(standard_hp)
+        res = evaluator.evaluate(standard_hp,config_keys=["epochs"])

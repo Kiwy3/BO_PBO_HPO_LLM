@@ -3,8 +3,8 @@
 #OAR -p chuc
 #OAR -l walltime=15
 #OAR -n epoch_sensitivity_llm
-#OAR -O OAR_BO_%jobid%.out
-#OAR -E OAR_BO_%jobid%.err
+#OAR -O exp04_%jobid%.out
+#OAR -E exp04_%jobid%.err
 
 
 hostname
