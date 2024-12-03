@@ -2,21 +2,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import json, math
 
-folder_path = "exp03_bo_LHS/"
-task = "hellaswag"
+folder_path = "exp05_bo_space/"
+task = "mmlu"
 
 with open(f"{folder_path}/config.json") as f:
     config = json.load(f)
 experiment = config["experiment"]
 hyperparameters = config["hyperparameters"]
 
-data = pd.read_json(folder_path+"export.json",lines=True)
+data = pd.read_json(folder_path+"res.json",lines=True)
 X = pd.json_normalize(data["hyperparameters"])
 Y = data["results"].apply(lambda x: x[task])
 
 phase = data["meta_data"].apply(lambda x: x["phase"])
 ph_mask = phase == "sampling"
-opt, smpl = phase.value_counts()
+smpl = phase.value_counts()["sampling"]
 
 hp_names = X.columns.to_list()
 
@@ -48,7 +48,7 @@ for i, name in enumerate(hp_names):
     row = i // 2
     col = i % 2
     axes[row, col].scatter(range(len(X[name][ph_mask])), X[name][ph_mask], label = "sampling", c="orange")
-    axes[row, col].scatter(range(len(X[name][~ph_mask])), X[name][~ph_mask], label = "sampling", c="blue")
+    axes[row, col].scatter(range(smpl,len(X[name])), X[name][~ph_mask], label = "optimization", c="blue")
     axes[row, col].set_title(name)
     axes[row, col].set_xlabel(name)
     axes[row, col].set_ylabel(task)
