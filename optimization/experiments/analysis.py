@@ -2,8 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import json, math
 
-folder_path = "exp05_bo_space/"
-task = "mmlu"
+folder_path = "exp04_FT/"
+task = "hellaswag"
 
 with open(f"{folder_path}/config.json") as f:
     config = json.load(f)
@@ -16,7 +16,12 @@ Y = data["results"].apply(lambda x: x[task])
 
 phase = data["meta_data"].apply(lambda x: x["phase"])
 ph_mask = phase == "sampling"
-smpl = phase.value_counts()["sampling"]
+if ph_mask.sum() == 0:
+    print("test")
+    smpl=0
+else : 
+    smpl = phase.value_counts()["sampling"]
+
 
 hp_names = X.columns.to_list()
 
