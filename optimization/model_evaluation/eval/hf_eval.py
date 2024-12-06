@@ -105,7 +105,12 @@ def convert_and_evaluate(
 
     from lm_eval.models.huggingface import HFLM
 
-    model = HFLM(pretrained=str(out_dir.resolve()), device=device, batch_size=batch_size, dtype=dtype)
+    model = HFLM(pretrained=str(out_dir.resolve()),
+                device=device,
+                batch_size=batch_size,
+                dtype=dtype,
+                parallelize=True
+                )
 
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
