@@ -14,7 +14,7 @@ cd /home/ndavouse/ft_poc
 MAIN_FOLDER="optimization/experiments/exp06_soo_zellij"
 
 
-source /home/ndavouse/ft_poc/.venv/bin/activate
+source /home/ndavouse/ft_poc/.venv_10/bin/activate
 python ./$MAIN_FOLDER/exp06.py
 
 CONFIG_FILE=$(jq -r '.experiment.historic_file' $MAIN_FOLDER/config.json)

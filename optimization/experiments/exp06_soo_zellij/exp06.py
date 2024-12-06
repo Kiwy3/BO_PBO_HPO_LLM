@@ -13,6 +13,7 @@ from model_evaluation.model_eval import ModelEvaluator
 
 def main():
     evaluator = ModelEvaluator(config_file="optimization/experiments/exp06_soo_zellij/config.json")
+    calls = evaluator.experiment["calls"]
     lf = Loss( objective=[Maximizer("obj")])(evaluator)
 
     # define the search spac
@@ -32,7 +33,7 @@ def main():
 
     explor = CenterSOO(sp)
     #stop1 = BooleanStop(explor, "computed")  # set target to None, DBA will automatically asign it.
-    stop = Threshold(lf, "calls", 15)
+    stop = Threshold(lf, "calls", calls)
     dba = DBASampling(
         sp, SooTreeSearch(sp, float("inf")), explor, scoring=Min()
     )
