@@ -277,7 +277,12 @@ class ModelEvaluator:
         float
             Result of the evaluation for the first task.
         """
-        return {"obj":self.evaluate(x)}
+        ok = True
+        while ok : 
+            try :
+                return self.evaluate(x)
+            except Exception as e:
+                print(e)
 
 if __name__ == "__main__":
     evaluator = ModelEvaluator()
