@@ -18,7 +18,8 @@ if  __name__ == "__main__":
     config = evaluator.load_config("optimization/experiments/exp07_epochs_mmlu/config.json")
     print("config loaded : ",config)
     for i in epoch_list:
-        config["experiment"]["epochs"] = i+1
-        evaluator = ModelEvaluator(config=config)
-        print(evaluator.experiment)
-        res = evaluator.evaluate(standard_hp,config_keys=["epochs"])
+        for j in range(10):
+            config["experiment"]["epochs"] = i+1
+            evaluator = ModelEvaluator(config=config)
+            print(evaluator.experiment)
+            res = evaluator.evaluate(standard_hp,config_keys=["epochs"])
