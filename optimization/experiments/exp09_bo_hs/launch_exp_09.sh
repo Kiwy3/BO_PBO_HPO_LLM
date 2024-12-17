@@ -11,11 +11,11 @@ hostname
 date
 
 cd /home/ndavouse/ft_poc
-MAIN_FOLDER="optimization/experiments/exp09_bo_space"
+MAIN_FOLDER="optimization/experiments/exp09_bo_hs"
 
 
 source /home/ndavouse/ft_poc/.venv/bin/activate
-python ./$MAIN_FOLDER/exp05.py
+python ./$MAIN_FOLDER/exp09.py
 
 CONFIG_FILE=$(jq -r '.experiment.historic_file' $MAIN_FOLDER/config.json)
 
