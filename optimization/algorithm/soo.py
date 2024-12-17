@@ -160,6 +160,7 @@ class SOO :
                 score=leaves_data[key]["score"],
                 score_state=leaves_data[key]["score_state"],
             )
+            l.state = leaves_data[key]["state"]
             self.tree[l.depth,l.depth_id]=l
 
     def run(self,budget = 5,saving=False) : #OK
