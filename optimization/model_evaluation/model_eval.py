@@ -277,12 +277,13 @@ class ModelEvaluator:
         float
             Result of the evaluation for the first task.
         """
-        ok = True
-        while ok : 
+        ok = 0
+        while ok <5 : 
             try :
                 return self.evaluate(x)
             except Exception as e:
                 print(e)
+                ok += 1
 
 if __name__ == "__main__":
     evaluator = ModelEvaluator()
