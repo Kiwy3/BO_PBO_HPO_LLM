@@ -1,4 +1,4 @@
-from soo import SOO, leaf, array
+from algorithm.soo import SOO, leaf, array
 import torch
 import math
 
@@ -103,6 +103,9 @@ class BaMSOO(SOO):
                 new_j=0,
                 init= True       
             )
+
+    def save(self,filename="bamsoo.json"):
+        super().save(filename)
 
     def run(self,budget = 5,saving=False) :
         if self.n_eval == 0 : self.initiate();print("init done")

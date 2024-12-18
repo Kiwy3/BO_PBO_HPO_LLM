@@ -29,6 +29,7 @@ class SOO :
             self.loop = 0
             self.n_eval = 0
             self.search_space.coef()
+            self.last_depth = 0
         self.objective = obj_fun
 
     def scoring(self,l):
@@ -107,7 +108,7 @@ class SOO :
                 print(f"\t leaf number {l.depth_id} : ")
                 print(f"\t\t center : {l.space.center}, score = {l.score}, state : {l.state}")
 
-    def save(self): #OK
+    def save(self, filename = "tree.json"): #OK
         export = {
             "global" : {
                 "K" : self.K,
@@ -115,6 +116,7 @@ class SOO :
                 "space" : self.search_space.variables,
                 "loop" : self.loop,
                 "n_eval" : self.n_eval,
+                "last_depth" : self.last_depth
             },
         }
         tree = {}
@@ -133,7 +135,7 @@ class SOO :
             }
         export["tree"] = tree
 
-        with open("tree.json", 'w') as f:
+        with open(filename, 'w') as f:
             json.dump(export, f,indent=2)
 
     def load_from_file(self, filename): #OK
@@ -146,6 +148,7 @@ class SOO :
         self.maximizer = tree_config['maximizer']
         self.loop = tree_config['loop']
         self.n_eval = tree_config['n_eval']
+        self.last_depth = tree_config['last_depth']
         self.search_space = array(tree_config['space'])
 
         
@@ -169,7 +172,8 @@ class SOO :
         while self.n_eval <= budget :
             print("loop number : ", self.loop,"n_eval = ",self.n_eval)
             vmax = float("-inf")
-            for h in range(self.max_depth()):
+            for h in range(self.last_depth,self.max_depth()):
+                self.last_depth = h
 
                 j = self.select(h)
                 print(f"\t h={h},j={j}")
@@ -185,7 +189,9 @@ class SOO :
                             new_j = self.K*j+i
                         )
                     vmax = self.tree[h,j].score
-            if saving : self.save()
+                if saving : self.save()
+            self.last_depth = 0
+            
             self.loop = self.loop + 1
         return self.bestof()
 
