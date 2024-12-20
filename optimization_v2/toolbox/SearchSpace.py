@@ -7,7 +7,9 @@ class SearchSpace:
     def __init__(self, 
                  mode : str  = "base",
                  savefile : str = None):
+        self.savefile = savefile
         self.variables = {}
+        self.center = self.get_center()
         if mode == "base":
             self.base_init()
 
@@ -30,7 +32,7 @@ class SearchSpace:
         x = []
         for value in self.variables.values():
             x.append(value.get_center())
-        return x
+        return self.get_solution(x)
     
     def init_coef(self):
         self.coef = []
@@ -69,11 +71,13 @@ class SearchSpace:
         return spaces
 
     def get_solution(self,x):
-        sol = Solution(self.variables,x)
+        sol = Solution(savefile=self.savefile,
+                       variables=self.variables,
+                       x=x)
         return sol
 
 class Solution(SearchSpace):
-    def __init__(self,variables, x):
+    def __init__(self,savefile,variables, x):
         self.variables = variables
 
         self.base_value = x
