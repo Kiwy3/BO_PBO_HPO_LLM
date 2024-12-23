@@ -3,7 +3,7 @@ import json
 import math
 import torch
 from typing import Dict, List, Literal, Optional, Tuple, Union
-from SearchSpace import SearchSpace, Solution, var
+from optimization_v2.toolbox.SearchSpace import SearchSpace, Solution
 
 experiments = {
     "experiment1": {
@@ -24,7 +24,7 @@ experiments = {
 
 class ModelEval:
     def __init__(self,
-                search_space : SearchSpace = SearchSpace("base"), 
+                search_space : SearchSpace = SearchSpace(mode="base"), 
                 model_id : str ="meta-llama/Llama-3.2-1B",
                 experiment_name : str = "experiment1",
                 dev_run : str = "fake"):
@@ -64,15 +64,3 @@ class ModelEval:
         os.system("rm -rf eval")
 
         return results["results"][self.task]["acc,none"]
-
-
-evaluator = ModelEval(
-    lora_r=8,
-    lora_alpha=16,
-)
-
-for val in experiments.values():
-    evaluator.train_and_evaluate(
-        exp_name=val["name"],
-        x=(val["lora_r"],val["lora_alpha"],val["dropout"],val["min_lr"])
-    )

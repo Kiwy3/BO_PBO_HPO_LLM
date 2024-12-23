@@ -1,31 +1,39 @@
 import numpy as np
 from copy import deepcopy as dc
 import math
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 class SearchSpace:
 
-    def __init__(self, 
+    def __init__(self,
+                 variables : Optional[dict] =None , 
                  mode : str  = "base",
                  savefile : str = None):
         self.savefile = savefile
-        self.variables = {}
+        if variables is not None:
+            for key, value in variables.items():
+                variable = value["name"] = key
+                self.add_variable(variable)
+        else : 
+            self.variables = {}
+            if mode == "base":
+                self.base_init()
         self.center = self.get_center()
-        if mode == "base":
-            self.base_init()
+        
 
     def base_init(self):
-        space = { 
-            "learning_rate" : {"min" : -10,"max" : -1,"type" : "log"},
+        space = {          
             "lora_rank" : {"min" : 2,"max" : 32,"type" : "int"},
-            "grad_batches" : {"min" : 1,"max" : 16,"type" : "int"},
             "lora_alpha" : {"min" : 16,"max" : 64,"type" : "int"},
             "lora_dropout" : {"min" : 0,"max" : 0.5,"type" : "float"},
-            "weight_decay" : {"min" : 0,"max" : 0.5,"type" : "log"} 
+            "learning_rate" : {"min" : -10,"max" : -1,"type" : "log"},
+            #"grad_batches" : {"min" : 1,"max" : 16,"type" : "int"},
+            #"weight_decay" : {"min" : 0,"max" : 0.5,"type" : "log"} 
         }
 
         for key, value in space.items():
-            variable = value["name"] = key
-            self.add_variable(variable)
+            value["name"] = key
+            self.add_variable(value)
         
 
     def get_center(self):
@@ -37,37 +45,40 @@ class SearchSpace:
     def init_coef(self):
         self.coef = []
         for value in self.variables.values():
-            coef = value.init_var_coef()
+            coef = value.get_coef()
             self.coef.append(coef)
             
     def add_variable(self, 
                     variable: dict):
         
+        coef = variable.get("coef",None)
+        
         new_var = var(
             name = variable["name"],
             vtype = variable["type"],
             min = variable["min"],
-            max = variable["max"]
+            max = variable["max"],
+            coef = coef
         )
+
+
         self.variables[new_var.name] = new_var
     def section(self,K) :
         spaces = [dc(self) for _ in range(K)]
         width = {}
-        for var in self.variables.keys():
-            width[var] = (self.variables[var]["max"] - self.variables[var]["min"])/self.variables[var]["coef"]
+        for key, value in self.variables.items():
+            width[key] = value.get_norm_width()
 
+        dim_index = np.argmax(list(width.values()))
+        key_max = list(self.variables.keys())[dim_index]
+        max_var = self.variables[key_max]
 
-
-        dim = np.argmax(list(width.values()))
-        var = list(self.variables.keys())[dim]
-
-        lower = self.variables[var]["min"]
-        upper = self.variables[var]["max"]
+        lower = max_var.min
+        upper = max_var.max
         steps = (upper - lower)/K
         for i in range(K) :
-            spaces[i].variables[var]["min"] = lower + i*steps
-            spaces[i].variables[var]["max"] = lower + (i+1)*steps
-            spaces[i].center = spaces[i].get_center()
+            spaces[i].variables[key_max].min = lower + i*steps
+            spaces[i].variables[key_max].max = lower + (i+1)*steps
         return spaces
 
     def get_solution(self,x):
@@ -75,6 +86,12 @@ class SearchSpace:
                        variables=self.variables,
                        x=x)
         return sol
+
+    def get_dict(self):
+        dic = {}
+        for key, value in self.variables.items():
+            dic[key] = value.get_dict()
+        return dic
 
 class Solution(SearchSpace):
     def __init__(self,savefile,variables, x):
@@ -96,7 +113,6 @@ class Solution(SearchSpace):
         res = 1
         for x in self.converted_values:
             res *= x
-
         return res
 
     def save(self):
@@ -106,11 +122,27 @@ class Solution(SearchSpace):
 
 class var:
 
-    def __init__(self, name, vtype, min, max):
+    def __init__(self, name : str,
+                vtype : str,
+                min : float,
+                max : float,
+                coef : float):
         self.name = name
         self.type = vtype
         self.min = min
         self.max = max
+
+        if coef is None:
+            self.init_coef()
+        else:
+            self.coef = coef
+
+    def get_norm_width(self):
+        return (self.max - self.min)/self.coef
+
+
+    def init_coef(self):
+        self.coef = self.max - self.min
 
     def get_center(self): 
         return (self.min + self.max)/2
@@ -122,3 +154,11 @@ class var:
             return float(x)
         elif self.type == "log":
             return 10**x
+        
+    def get_dict(self):
+        dic = {}
+        dic["name"] = self.name
+        dic["type"] = self.type
+        dic["min"] = self.min
+        dic["max"] = self.max
+        return dic
