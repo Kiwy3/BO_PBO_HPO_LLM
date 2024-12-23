@@ -1,124 +1,8 @@
 import numpy as np
 from copy import deepcopy as dc
-import math
+import json
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
-class SearchSpace:
-
-    def __init__(self,
-                 variables : Optional[dict] =None , 
-                 mode : str  = "base",
-                 savefile : str = None):
-        self.savefile = savefile
-        if variables is not None:
-            for key, value in variables.items():
-                variable = value["name"] = key
-                self.add_variable(variable)
-        else : 
-            self.variables = {}
-            if mode == "base":
-                self.base_init()
-        self.center = self.get_center()
-        
-
-    def base_init(self):
-        space = {          
-            "lora_rank" : {"min" : 2,"max" : 32,"type" : "int"},
-            "lora_alpha" : {"min" : 16,"max" : 64,"type" : "int"},
-            "lora_dropout" : {"min" : 0,"max" : 0.5,"type" : "float"},
-            "learning_rate" : {"min" : -10,"max" : -1,"type" : "log"},
-            #"grad_batches" : {"min" : 1,"max" : 16,"type" : "int"},
-            #"weight_decay" : {"min" : 0,"max" : 0.5,"type" : "log"} 
-        }
-
-        for key, value in space.items():
-            value["name"] = key
-            self.add_variable(value)
-        
-
-    def get_center(self):
-        x = []
-        for value in self.variables.values():
-            x.append(value.get_center())
-        return self.get_solution(x)
-    
-    def init_coef(self):
-        self.coef = []
-        for value in self.variables.values():
-            coef = value.get_coef()
-            self.coef.append(coef)
-            
-    def add_variable(self, 
-                    variable: dict):
-        
-        coef = variable.get("coef",None)
-        
-        new_var = var(
-            name = variable["name"],
-            vtype = variable["type"],
-            min = variable["min"],
-            max = variable["max"],
-            coef = coef
-        )
-
-
-        self.variables[new_var.name] = new_var
-    def section(self,K) :
-        spaces = [dc(self) for _ in range(K)]
-        width = {}
-        for key, value in self.variables.items():
-            width[key] = value.get_norm_width()
-
-        dim_index = np.argmax(list(width.values()))
-        key_max = list(self.variables.keys())[dim_index]
-        max_var = self.variables[key_max]
-
-        lower = max_var.min
-        upper = max_var.max
-        steps = (upper - lower)/K
-        for i in range(K) :
-            spaces[i].variables[key_max].min = lower + i*steps
-            spaces[i].variables[key_max].max = lower + (i+1)*steps
-        return spaces
-
-    def get_solution(self,x):
-        sol = Solution(savefile=self.savefile,
-                       variables=self.variables,
-                       x=x)
-        return sol
-
-    def get_dict(self):
-        dic = {}
-        for key, value in self.variables.items():
-            dic[key] = value.get_dict()
-        return dic
-
-class Solution(SearchSpace):
-    def __init__(self,savefile,variables, x):
-        self.variables = variables
-
-        self.base_value = x
-        self.convert_values(x)
-    
-    def convert_values(self,x):
-        converted_x = [0]*len(x)
-        for i,value in enumerate(self.variables.values()):
-            converted_x[i] = value.convert_value(x[i])
-        self.converted_values = converted_x
-    
-    def get_values(self):
-        return self.converted_values
-    
-    def speed_run(self):
-        res = 1
-        for x in self.converted_values:
-            res *= x
-        return res
-
-    def save(self):
-        dic = {}
-        dic["base_value"] = self.base_value
-        dic["converted_values"] = self.converted_values
 
 class var:
 
@@ -162,3 +46,147 @@ class var:
         dic["min"] = self.min
         dic["max"] = self.max
         return dic
+
+
+class SearchSpace:
+
+    def __init__(self,
+                 variables : Optional[dict] =None , 
+                 mode : Optional[str]  = None,
+                 savefile : Optional[str] = None):
+        self.savefile = savefile
+        if variables is not None:
+            for key, value in variables.items():
+                variable = value["name"] = key
+                self.add_variable(variable)
+        else : 
+            self.variables = {}
+            if mode == "base":
+                self.base_init()
+        self.center = self.get_center()
+        
+
+    def base_init(self) -> None:
+        space = {          
+            "lora_rank" : {"min" : 2,"max" : 32,"type" : "int"},
+            "lora_alpha" : {"min" : 16,"max" : 64,"type" : "int"},
+            "lora_dropout" : {"min" : 0,"max" : 0.5,"type" : "float"},
+            "learning_rate" : {"min" : -10,"max" : -1,"type" : "log"},
+            #"grad_batches" : {"min" : 1,"max" : 16,"type" : "int"},
+            #"weight_decay" : {"min" : 0,"max" : 0.5,"type" : "log"} 
+        }
+
+        for key, value in space.items():
+            value["name"] = key
+            self.add_variable(value)
+        
+    def get_dimensions(self) -> int:
+        return len(self.variables)
+
+    def get_center(self):
+        x = []
+        for value in self.variables.values():
+            x.append(value.get_center())
+        sol = self.get_solution(x)
+        return sol
+    
+    def init_coef(self) -> None:
+        self.coef = []
+        for value in self.variables.values():
+            coeff = value.coef()
+            self.coef.append(coeff)
+            
+    def add_variable(self, 
+                    variable: dict) -> None:
+        coef = variable.get("coef",None)
+        new_var = var(
+            name = variable["name"],
+            vtype = variable["type"],
+            min = variable["min"],
+            max = variable["max"],
+            coef = coef
+        )
+        self.variables[new_var.name] = new_var
+
+    def section(self,
+                K : int = 3) -> List:
+        spaces = [dc(self) for _ in range(K)]
+        width = {}
+        for key, value in self.variables.items():
+            width[key] = value.get_norm_width()
+
+        dim_index = np.argmax(list(width.values()))
+        key_max = list(self.variables.keys())[dim_index]
+        max_var = self.variables[key_max]
+
+        lower = max_var.min
+        upper = max_var.max
+        steps = (upper - lower)/K
+        for i in range(K) :
+            spaces[i].variables[key_max].min = lower + i*steps
+            spaces[i].variables[key_max].max = lower + (i+1)*steps
+        return spaces
+
+    def get_solution(self,
+                     x : List) :
+        sol = Solution(savefile=self.savefile,
+                       variables=self.variables,
+                       x=x)
+        return sol
+
+    def get_dict(self) -> dict[str,dict]:
+        dic = {}
+        for key, value in self.variables.items():
+            dic[key] = value.get_dict()
+        return dic
+
+class Solution(SearchSpace):
+    def __init__(self,
+                 variables : dict[str,var],
+                 x : List[float],
+                 savefile : Optional[str] = None,
+                 ):
+        self.variables = variables
+        self.savefile = savefile
+        self.base_value = x
+        self.convert_values(x)
+    
+    def convert_values(self,
+                       x : List[float]) -> None:
+        converted_x = [0]*len(x)
+        for i,value in enumerate(self.variables.values()):
+            converted_x[i] = value.convert_value(x[i])
+        self.converted_values = converted_x
+    
+    def get_values(self):
+        return self.converted_values
+    
+    def speed_run(self) -> float:
+        res = 1.
+        for x in self.converted_values:
+            res *= (x +2)**2
+            res -= x
+        return res
+
+    def add_score(self,
+                  score : Union[float,dict[str,float]]):
+        if score is float : 
+            self.score = {"score" : score}
+        else : 
+            self.score = score
+    def save(self):
+
+        if self.savefile is None :
+            return
+        sol = {}
+        sol["base_value"] = self.base_value
+        sol["converted_values"] = self.converted_values
+        dic = {
+            "solution" : sol,
+            "score" : self.score
+        }
+        with open(self.savefile,"a") as f:
+            json.dump(dic,f)
+            f.write("\n")
+
+

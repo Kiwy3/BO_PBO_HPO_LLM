@@ -37,6 +37,7 @@ class ModelEval:
     def train_and_evaluate(self,
                            x : Solution):
         if self.dev_run == "fake": # fake run for testing
+            print("Running fake function")
             return x.speed_run()
         
         lora_r, lora_alpha, dropout, min_lr = x.get_values()
@@ -51,16 +52,20 @@ class ModelEval:
                            )
         eval_string = (f"litgpt evaluate "+ # command
                        f"{self.folder}/final --out_dir eval "+ # path management
-                       f"--tasks {self.task} --limit 50 " #tasks definition
+                       f"--tasks {self.task} " #tasks definition
                        )
         os.system(training_string)
         os.system(eval_string)
 
         with open("eval/results.json", "r") as f:
             results = json.load(f)
+        cleaned_results = results["results"]
+
+        x.add_score(cleaned_results)
+        x.save()
 
         cleaning_string = f"rm -rf {self.folder} eval"
         os.system(cleaning_string)
         os.system("rm -rf eval")
 
-        return results["results"][self.task]["acc,none"]
+        return cleaned_results[self.task]["acc,none"]

@@ -3,7 +3,8 @@ from copy import deepcopy as dc
 import gc
 import json
 import matplotlib.pyplot as plt
-
+from optimization_v2.toolbox.SearchSpace import SearchSpace, Solution
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 def himmelblau(x) :
     return (x[0]**2 + x[1] - 11)**2 + (x[0] + x[1]**2 - 7)**2
@@ -13,38 +14,43 @@ def fun_error():
 
 class SOO :
     def __init__(self, #OK
-                 space = None,
-                 maximizer = True,
-                 K = 3,
-                 filename = None,
-                 obj_fun=fun_error) :
+                 space : Optional[SearchSpace]  = None,
+                 maximizer : Optional[bool] = True,
+                 K : int = 3,
+                 filename : str = None,
+                 obj_fun = fun_error) :
         
         if filename is not None :
             self.load_from_file(filename)
         else : 
-            self.tree = {}
+            self.tree = {} 
             self.search_space = space
             self.K = K
             self.maximizer = maximizer
             self.loop = 0
             self.n_eval = 0
-            self.search_space.coef()
             self.last_depth = 0
         self.objective = obj_fun
 
     def scoring(self,l):
-        x = l.space.center
+        x = l.space.get_center()
         y = self.objective(x) * (-1 if not self.maximizer else 1)
         gc.collect()
         return y, "evaluated"
 
-    def __compare_center__(self,x1,x2) : #OK
+    def __compare_center__(self,
+                           x1 : Solution,
+                           x2 : Solution) -> bool : #OK
+        y1 = x1.get_values()
+        y2 = x2.get_values()
         diff = 0.
-        for i in range(len(x1)):
-            diff += abs(x1[i] - x2[i])
+        for i in range(len(y1)):
+            diff += abs(y1[i] - y2[i])
         if diff < 0.0001 :
+            print("same center")
             return True
         else :
+            print("different center")
             return False
         
     def max_depth (self) : #OK
@@ -58,7 +64,11 @@ class SOO :
             new_j=0          
         )
 
-    def add_leaf(self,space,depth,new_j,parent=None) : #OK
+    def add_leaf(self,
+                 space : SearchSpace,
+                 depth : int,
+                 new_j : int,
+                 parent =None) : #OK
         l = leaf(
             space=space,
             depth=depth,
@@ -66,7 +76,7 @@ class SOO :
             loop=self.loop      
         )
         if parent is not None :
-            if self.__compare_center__(parent.space.center,l.space.center) : 
+            if self.__compare_center__(parent.space.get_center(),l.space.get_center()) : 
                 l.score = parent.score
                 l.score_state = "inherited"
                 self.tree[depth,new_j] = l
@@ -96,7 +106,7 @@ class SOO :
         max_leaf = [l for l in self.tree.values()][max_index]
         print("best leaf : ",
               "\n \t best score : ", max_leaf.score,
-              "\n \t center : ", max_leaf.space.center)
+              "\n \t center : ", max_leaf.space.get_center().get_values())
         return max_leaf
 
     def print(self) : #OK
@@ -106,7 +116,7 @@ class SOO :
                            if key[0] == depth]
             for l in depth_leaves:
                 print(f"\t leaf number {l.depth_id} : ")
-                print(f"\t\t center : {l.space.center}, score = {l.score}, state : {l.state}")
+                print(f"\t\t center : {l.space.get_center().get_values()}, score = {l.score}, state : {l.state}, score_state : {l.score_state}")
 
     def save(self, filename = "tree.json"): #OK
         export = {
@@ -129,7 +139,7 @@ class SOO :
                 "depth_id" : l.depth_id,
                 "score" : l.score,
                 "state" : l.state,
-                "space" : l.space.variables,
+                "space" : l.space.get_dict(),
                 "loop" : l.loop,
                 "score_state" : l.score_state
             }
@@ -149,14 +159,14 @@ class SOO :
         self.loop = tree_config['loop']
         self.n_eval = tree_config['n_eval']
         self.last_depth = tree_config['last_depth']
-        self.search_space = array(tree_config['space'])
+        self.search_space = SearchSpace(variables=tree_config['space'])
 
         
         leaves_data = data['tree']
         self.tree = {}
         for key in leaves_data.keys() :
             l = leaf(
-                space=array(leaves_data[key]["space"]),
+                space=SearchSpace(variables=leaves_data[key]["space"]),
                 depth=leaves_data[key]["depth"],
                 loop=leaves_data[key]["loop"],
                 depth_id=leaves_data[key]["depth_id"],
@@ -169,7 +179,7 @@ class SOO :
     def run(self,budget = 5,saving=False) : #OK
         if self.n_eval == 0 : self.initiate();print("init done")
 
-        while self.n_eval <= budget :
+        while self.n_eval < budget :
             print("loop number : ", self.loop,"n_eval = ",self.n_eval)
             vmax = float("-inf")
             for h in range(self.last_depth,self.max_depth()):
@@ -196,7 +206,12 @@ class SOO :
         return self.bestof()
 
 class leaf :
-    def __init__(self,space,depth,loop=0,depth_id=0,score = None,score_state = "unknown") :
+    def __init__(self,space : SearchSpace,
+                 depth,
+                 loop=0,
+                 depth_id=0,
+                 score = None,
+                 score_state = "unknown") :
         self.global_id = str(depth) + "_" + str(depth_id)
         self.space = space
         self.depth = depth
@@ -205,43 +220,3 @@ class leaf :
         self.state= True
         self.loop = loop
         self.score_state = score_state
-
-class array :
-    def __init__(self,variables) :
-        self.variables = variables
-        self.dimensions = len(variables)
-        self.center = self.get_center()
-
-
-    def get_center(self) :
-        x = []
-        for var in self.variables.keys() :
-            x.append(
-                (self.variables[var]["min"] + self.variables[var]["max"])/2)
-        return x
-    
-    def coef(self):
-        for key in self.variables.keys() :
-            self.variables[key]["coef"]=self.variables[key]["max"] - self.variables[key]["min"]
-
-    
-    def section(self,K) :
-        spaces = [dc(self) for _ in range(K)]
-        width = {}
-        for var in self.variables.keys():
-            width[var] = (self.variables[var]["max"] - self.variables[var]["min"])/self.variables[var]["coef"]
-
-
-
-        dim = np.argmax(list(width.values()))
-        var = list(self.variables.keys())[dim]
-
-        lower = self.variables[var]["min"]
-        upper = self.variables[var]["max"]
-        steps = (upper - lower)/K
-        for i in range(K) :
-            spaces[i].variables[var]["min"] = lower + i*steps
-            spaces[i].variables[var]["max"] = lower + (i+1)*steps
-            spaces[i].center = spaces[i].get_center()
-        return spaces
-        
