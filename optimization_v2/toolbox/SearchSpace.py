@@ -72,8 +72,8 @@ class SearchSpace:
             "lora_alpha" : {"min" : 16,"max" : 64,"type" : "int"},
             "lora_dropout" : {"min" : 0,"max" : 0.5,"type" : "float"},
             "learning_rate" : {"min" : -10,"max" : -1,"type" : "log"},
+            "weight_decay" : {"min" : -3,"max" : -1,"type" : "log"} 
             #"grad_batches" : {"min" : 1,"max" : 16,"type" : "int"},
-            #"weight_decay" : {"min" : 0,"max" : 0.5,"type" : "log"} 
         }
 
         for key, value in space.items():

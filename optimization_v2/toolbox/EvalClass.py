@@ -40,15 +40,21 @@ class ModelEval:
             print("Running fake function")
             return x.speed_run()
         
-        lora_r, lora_alpha, dropout, min_lr = x.get_values()
+        lora_r, lora_alpha, dropout, min_lr, weight_decay = x.get_values()
+
+
+        optimizer_config = ("'{'class_path': 'torch.optim.AdamW', 'init_args': {"+
+                f"'lr': {min_lr}, 'weight_decay': {weight_decay}, 'betas': [{0.9}, {0.999}]"+
+                "}} '")
+
 
         training_string = (f"litgpt finetune "+ #command
                            f"{self.model_id} --out_dir {self.folder}"+ #path management
                            f" --devices {torch.cuda.device_count()}   --precision bf16-true "+ #global parameter of the training
-                           f"--train.epochs 1 --train.lr_warmup_steps 100 "+ #Training args
-                           f"--eval.interval 150 "+#Eval args
-                           f"--lora_key true --lora_value true "+#lora application
-                           f"--lora_r {lora_r} --lora_alpha {lora_alpha} --lora_dropout {dropout} --train.min_lr {min_lr}" #hyperparameter
+                           f"--train.epochs 2 --train.lr_warmup_steps 100 --optimizer {optimizer_config} "+ #Training args
+                           f"--eval.interval 1000 "+#Eval args
+                           f"--lora_key true --lora_value true --lora_query true --lora_head true "+#lora application
+                           f"--lora_r {lora_r} --lora_alpha {lora_alpha} --lora_dropout {dropout} " #hyperparameter
                            )
         eval_string = (f"litgpt evaluate "+ # command
                        f"{self.folder}/final --out_dir eval "+ # path management
