@@ -68,4 +68,4 @@ class ModelEval:
         os.system(cleaning_string)
         os.system("rm -rf eval")
 
-        return cleaned_results[self.task]["acc,none"]
+        return cleaned_results[self.task]["acc_norm,none"]
