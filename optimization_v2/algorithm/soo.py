@@ -123,7 +123,7 @@ class SOO :
             "global" : {
                 "K" : self.K,
                 "maximizer" : self.maximizer,
-                "space" : self.search_space.variables,
+                "space" : self.search_space.get_dict(),
                 "loop" : self.loop,
                 "n_eval" : self.n_eval,
                 "last_depth" : self.last_depth
