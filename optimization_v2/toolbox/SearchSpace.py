@@ -39,6 +39,9 @@ class var:
         elif self.type == "log":
             return 10**x
         
+    def scale_value(self,x):
+        return x*self.coef + self.min
+        
     def get_dict(self):
         dic = {}
         dic["name"] = self.name
@@ -83,12 +86,16 @@ class SearchSpace:
     def get_dimensions(self) -> int:
         return len(self.variables)
 
-    def get_center(self):
+    def get_center(self,
+                   type : str = "solution") -> List:
         x = []
         for value in self.variables.values():
             x.append(value.get_center())
-        sol = self.get_solution(x)
-        return sol
+        if type == "solution":
+            sol = self.get_solution(x)
+            return sol
+        elif type == "list":
+            return x
     
     def init_coef(self) -> None:
         self.coef = []
@@ -139,6 +146,14 @@ class SearchSpace:
         for key, value in self.variables.items():
             dic[key] = value.get_dict()
         return dic
+    
+    def get_bounds(self):
+        lower = []
+        upper = []
+        for value in self.variables.values():
+            lower.append(value.min)
+            upper.append(value.max)
+        return lower,upper
 
 class Solution(SearchSpace):
     def __init__(self,
@@ -160,7 +175,9 @@ class Solution(SearchSpace):
     
     def get_values(self):
         return self.converted_values
-    
+
+
+
     def speed_run(self) -> float:
         res = 1.
         for x in self.converted_values:
