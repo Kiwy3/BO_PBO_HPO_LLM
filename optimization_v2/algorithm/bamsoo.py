@@ -1,4 +1,8 @@
-from algorithm.soo import SOO, leaf, array
+from optimization_v2.algorithm.soo import SOO, leaf, fun_error
+from optimization_v2.toolbox.SearchSpace import SearchSpace, Solution
+
+from typing import Dict, List, Literal, Optional, Tuple, Union
+
 import torch
 import math
 
@@ -8,12 +12,25 @@ from botorch.fit import fit_gpytorch_mll
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 class BaMSOO(SOO):
-    def __init__(self, obj_fun, space = None, maximizer = True, K = 3, filename = None) :
-        super().__init__(obj_fun=obj_fun,space = space, maximizer = maximizer, K = K, filename = filename)
-        self.eta = 0.5
+
+    def __init__(self, #OK
+            space : Optional[SearchSpace]  = None,
+            maximizer : Optional[bool] = True,
+            K : int = 3,
+            filename : str = None,
+            eta : float = 0.5,
+            obj_fun = fun_error) :
+        
+        super().__init__( 
+            space = space,
+            maximizer = maximizer,
+            K = K,
+            filename = filename,
+            obj_fun=obj_fun )
+        self.eta = eta
 
     def get_points(self):
-        points = [l.space.center for l in self.tree.values() if l.score_state=="evaluated"]
+        points = [l.space.get_center(type="list") for l in self.tree.values() if l.score_state=="evaluated"]
         scores = [l.score for l in self.tree.values() if l.score_state=="evaluated"]
         return points, scores
 
@@ -59,19 +76,20 @@ class BaMSOO(SOO):
     
     def scoring(self, l):
         self.update_gp()
-        print("\t\tUCB : ",self.UCB(l.space.center))
-        if self.UCB(l.space.center) >= self.fp : 
+        print("\t\tUCB : ",self.UCB(l.space.get_center(type="list")))
+        if self.UCB(l.space.get_center(type="list")) >= self.fp : 
             score,score_state = super().scoring(l)
             self.n_eval +=1
         else : 
-            score = self.LCB(l.space.center)
+            score = self.LCB(l.space.get_center(type="list"))
             score_state = "approximated"
         
         if score > self.fp:
             self.fp = score
 
         return score, score_state
-    def add_leaf(self,space,depth,new_j,parent=None,init=False) : #OK
+    def add_leaf(self,space,depth,new_j,
+                 parent : leaf=None,init=False) : #OK
 
         l = leaf(
             space=space,
@@ -79,7 +97,7 @@ class BaMSOO(SOO):
             depth_id = new_j        
         )
         if parent is not None :
-            if self.__compare_center__(parent.space.center,l.space.center) and parent.score_state in["evaluated","inherited"] : 
+            if self.__compare_center__(parent.space.get_center(),l.space.get_center()) and parent.score_state in["evaluated","inherited"] : 
                 l.score = parent.score
                 l.score_state = "inherited"
                 self.tree[depth,new_j] = l
