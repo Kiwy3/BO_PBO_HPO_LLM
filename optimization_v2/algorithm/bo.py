@@ -58,8 +58,7 @@ class BoGp():
                   X : Solution,
                   Y : float):
         self.points.append(X.base_value)
-        self.scores.append(Y)
-        self.n_eval += 1
+        self.scores.append([Y])
 
     def LHS_sampling(self,g=10):
         
@@ -78,7 +77,7 @@ class BoGp():
             X, Y = self.scoring(X)
             self.add_point(X, Y)
     def get_points_tensors(self):
-        return torch.tensor(self.points), torch.tensor(self.scores)
+        return torch.tensor(self.points, dtype=torch.double), torch.tensor(self.scores, dtype=torch.double)#.unsqueeze(-1)
 
     def get_new_point(self):
         train_X, train_Y = self.get_points_tensors()
@@ -91,20 +90,20 @@ class BoGp():
         )
         mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
         fit_gpytorch_mll(mll)
-        self.logEI = LogExpectedImprovement(model=gp, best_f=self.Y.max(),maximize=True)
+        self.logEI = LogExpectedImprovement(model=gp, best_f=max(self.scores),maximize=True)
         candidate, acq_value = optimize_acqf(
             #self.logEI, bounds=self.bounds, q=1, num_restarts=5, raw_samples=10,
             self.logEI, bounds=self.bounds, q=1, num_restarts=5, raw_samples=20,
         )
         candidate_list = [candidate[0][i].item() for i in range(len(candidate[0]))]
         
-        return candidate_list
+        return self.search_space.get_solution(candidate_list)
     
     def bestof(self): 
         max_index = np.argmax(self.scores)
         max_score = self.scores[max_index]
         max_point = self.points[max_index]
-        print("best leaf : ",
+        print("best point : ",
               "\n \t best score : ", max_score,
               "\n \t center : ", max_point)
         return max_point, max_score
