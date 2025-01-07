@@ -71,7 +71,7 @@ class ModelEval:
         x.add_score(cleaned_results)
         x.save()
 
-        cleaning_string = f"rm -rf {self.folder} eval"
+        cleaning_string = f"rm -rf {self.folder} eval_{self.folder}"
         os.system(cleaning_string)
         os.system("rm -rf eval")
 
