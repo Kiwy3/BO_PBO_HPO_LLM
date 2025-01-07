@@ -33,7 +33,7 @@ class ModelEval:
         self.space = search_space
         self.folder = experiment_name
         self.dev_run = dev_run
-        self.epochs = 2
+        self.epochs = 1
 
     def train_and_evaluate(self,
                            x : Solution):
