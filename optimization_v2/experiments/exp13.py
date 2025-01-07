@@ -18,4 +18,5 @@ def main():
 
     for i in range(1,5):
         evaluator.epochs = i
-        y = evaluator.train_and_evaluate()
+        y = evaluator.train_and_evaluate(space.get_center())
+        print(y)
