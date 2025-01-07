@@ -58,13 +58,13 @@ class ModelEval:
                            f"--lora_r {lora_r} --lora_alpha {lora_alpha} --lora_dropout {dropout} " #hyperparameter
                            )
         eval_string = (f"litgpt evaluate "+ # command
-                       f"{self.folder}/final --out_dir eval "+ # path management
+                       f"{self.folder}/final --out_dir eval_{self.folder} "+ # path management
                        f"--tasks {self.task} " #tasks definition
                        )
         os.system(training_string)
         os.system(eval_string)
 
-        with open("eval/results.json", "r") as f:
+        with open(f"eval_{self.folder}/results.json", "r") as f:
             results = json.load(f)
         cleaned_results = results["results"]
 
