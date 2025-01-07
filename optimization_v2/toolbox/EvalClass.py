@@ -33,6 +33,7 @@ class ModelEval:
         self.space = search_space
         self.folder = experiment_name
         self.dev_run = dev_run
+        self.epochs = 2
 
     def train_and_evaluate(self,
                            x : Solution):
@@ -51,7 +52,7 @@ class ModelEval:
         training_string = (f"litgpt finetune "+ #command
                            f"{self.model_id} --out_dir {self.folder}"+ #path management
                            f" --devices {torch.cuda.device_count()}   --precision bf16-true "+ #global parameter of the training
-                           f"--train.epochs 2 --train.lr_warmup_steps 100 --optimizer {optimizer_config} "+ #Training args
+                           f"--train.epochs {self.epochs} --train.lr_warmup_steps 100 --optimizer {optimizer_config} "+ #Training args
                            f"--eval.interval 1000 "+#Eval args
                            f"--lora_key true --lora_value true --lora_query true --lora_head true "+#lora application
                            f"--lora_r {lora_r} --lora_alpha {lora_alpha} --lora_dropout {dropout} " #hyperparameter
