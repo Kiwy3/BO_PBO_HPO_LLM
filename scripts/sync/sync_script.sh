@@ -1,1 +1,0 @@
-rsync -azvP ./scripts/ g5k:lille/ft_poc/scripts 
