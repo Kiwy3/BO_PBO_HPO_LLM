@@ -2,7 +2,7 @@ import numpy as np
 from copy import deepcopy as dc
 import json
 from typing import Dict, List, Literal, Optional, Tuple, Union
-
+from datetime import datetime
 
 class var:
 
@@ -165,6 +165,7 @@ class Solution(SearchSpace):
         self.savefile = savefile
         self.base_value = x
         self.convert_values(x)
+        self.opening_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
     def convert_values(self,
                        x : List[float]) -> None:
@@ -191,14 +192,22 @@ class Solution(SearchSpace):
             self.score = {"score" : score}
         else : 
             self.score = score
+        self.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     def save(self):
-
+        
         if self.savefile is None :
             return
+        time_dic = {
+            "opening_time" : self.opening_time,
+            "ending_time" : self.end_time
+        }
+
         sol = {}
+
         sol["base_value"] = self.base_value
         sol["converted_values"] = self.converted_values
         dic = {
+            "timing" : time_dic,
             "solution" : sol,
             "score" : self.score
         }

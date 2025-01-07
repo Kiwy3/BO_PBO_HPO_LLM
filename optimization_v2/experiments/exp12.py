@@ -16,15 +16,15 @@ def main():
         experiment_name="exp12"
     )
 
-    soo = BoGp(
+    bo = BoGp(
         space=space,
         maximizer=True,
         obj_fun=evaluator.train_and_evaluate
     )
 
-    soo.run(
+    bo.run(
         budget=50,
         init_budget=10
     )
 
-    soo.print()
+    bo.print()
