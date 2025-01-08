@@ -20,3 +20,19 @@ def main():
         evaluator.epochs = i
         y = evaluator.train_and_evaluate(space.get_center())
         print(y)
+
+def bis():
+    space = SearchSpace(mode="base",
+        savefile="exp13_bis.json")
+    
+    evaluator = ModelEval(
+        search_space = space,
+        dev_run = "",
+        experiment_name="exp13_bis",
+        model_id="meta-llama/Llama-3.2-3B"
+    )
+
+    for i in range(1,5):
+        evaluator.epochs = i
+        y = evaluator.train_and_evaluate(space.get_center())
+        print(y)
