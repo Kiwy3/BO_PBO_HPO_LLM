@@ -66,7 +66,7 @@ class SearchSpace:
             self.variables = {}
             if mode == "base":
                 self.base_init()
-        self.center = self.get_center()
+        #self.center = self.get_center()
         
 
     def base_init(self) -> None:
