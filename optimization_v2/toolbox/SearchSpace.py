@@ -3,6 +3,7 @@ from copy import deepcopy as dc
 import json
 from typing import Dict, List, Literal, Optional, Tuple, Union
 from datetime import datetime
+from scipy.stats.qmc import LatinHypercube
 
 class var:
 
@@ -133,6 +134,16 @@ class SearchSpace:
             spaces[i].variables[key_max].min = lower + i*steps
             spaces[i].variables[key_max].max = lower + (i+1)*steps
         return spaces
+
+    def LHS(self,
+            g : int = 10) -> List:
+        LHS = LatinHypercube(d=self.get_dimensions())
+        LHS_points = LHS.random(n=g)
+        converted_point = np.empty_like(LHS_points)
+        for j,point in enumerate(LHS_points):
+            for i,var in enumerate(self.variables.values()):
+                converted_point[j,i] = var.scale_value(point[i])
+        return converted_point.tolist()
 
     def get_solution(self,
                      x : List) :
