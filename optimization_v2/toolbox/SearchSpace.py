@@ -178,6 +178,10 @@ class Solution(SearchSpace):
         self.convert_values(x)
         self.opening_time 
         self.info = {}
+        
+        self.opening_time = ""
+        self.end_training_time = ""
+        self.end_time = ""
     
     def convert_values(self,
                        x : List[float]) -> None:
@@ -210,6 +214,7 @@ class Solution(SearchSpace):
             return
         time_dic = {
             "opening_time" : self.opening_time,
+            "starting_time" : self.end_training_time,
             "ending_time" : self.end_time
         }
 
