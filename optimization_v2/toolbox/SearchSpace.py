@@ -176,7 +176,6 @@ class Solution(SearchSpace):
         self.savefile = savefile
         self.base_value = x
         self.convert_values(x)
-        self.opening_time 
         self.info = {}
         
         self.opening_time = ""
