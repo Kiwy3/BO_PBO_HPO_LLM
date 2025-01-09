@@ -79,7 +79,6 @@ class BaMSOO(SOO):
         print("\t\tUCB : ",self.UCB(l.space.get_center(type="list")))
         if self.UCB(l.space.get_center(type="list")) >= self.fp : 
             score,score_state = super().scoring(l)
-            self.n_eval +=1
         else : 
             score = self.LCB(l.space.get_center(type="list"))
             score_state = "approximated"
@@ -107,7 +106,6 @@ class BaMSOO(SOO):
         
         if init : 
             score, score_state = super().scoring(l)
-            self.n_eval +=1
         else :        
             score, score_state = self.scoring(l)
         l.score = score

@@ -166,6 +166,7 @@ class Solution(SearchSpace):
         self.base_value = x
         self.convert_values(x)
         self.opening_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.info = {}
     
     def convert_values(self,
                        x : List[float]) -> None:
@@ -209,7 +210,8 @@ class Solution(SearchSpace):
         dic = {
             "timing" : time_dic,
             "solution" : sol,
-            "score" : self.score
+            "score" : self.score,
+            "info" : self.info
         }
         with open(self.savefile,"a") as f:
             json.dump(dic,f)

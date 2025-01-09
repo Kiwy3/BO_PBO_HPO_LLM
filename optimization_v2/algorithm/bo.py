@@ -49,7 +49,9 @@ class BoGp():
         self.scores = []
 
     def scoring(self, 
-                X : Solution):
+                X : Solution,
+                info : Optional[Dict] = None) -> Tuple[Solution, float]:
+        X.info = info
         Y = self.objective(X)*(-1 if not self.maximizer else 1)
         self.n_eval += 1
         return X, Y
@@ -74,7 +76,7 @@ class BoGp():
         lhs_points = self.LHS_sampling(g=g)
         for point in lhs_points:
             X = self.search_space.get_solution(point)
-            X, Y = self.scoring(X)
+            X, Y = self.scoring(X,info={"phase":"sampling"})
             self.add_point(X, Y)
     def get_points_tensors(self):
         return torch.tensor(self.points, dtype=torch.double), torch.tensor(self.scores, dtype=torch.double)#.unsqueeze(-1)
@@ -114,6 +116,6 @@ class BoGp():
         self.initiate(g = init_budget)
         while self.n_eval < budget:
             X = self.get_new_point()
-            X, Y = self.scoring(X)
+            X, Y = self.scoring(X,info={"phase":"optimization"})
             self.add_point(X, Y)
         return self.bestof()
