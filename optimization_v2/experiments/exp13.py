@@ -47,8 +47,9 @@ def ter():
         experiment_name="exp13_bis",
         model_id="meta-llama/Llama-3.2-3B"
     )
-
-    evaluator.evaluate(folder="meta-llama/Llama-3.2-3B")
+    x = space.get_center()
+    evaluator.evaluate(folder="meta-llama/Llama-3.2-3B",
+                       x=x)
 
     points = space.LHS(g=10)
     for i in range(1,5):
