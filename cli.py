@@ -12,6 +12,8 @@ print(f"Received argument: {arg}")
 
 if arg == "exp10" : 
     exp10.main()
+if arg == "exp10_bis" : 
+    exp10.bis()
 elif arg == "exp11" : 
     exp11.main()
 elif arg == "exp12" : 
