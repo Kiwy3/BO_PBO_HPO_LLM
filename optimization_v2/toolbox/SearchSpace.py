@@ -3,6 +3,7 @@ from copy import deepcopy as dc
 import json
 from typing import Dict, List, Literal, Optional, Tuple, Union
 from datetime import datetime
+from scipy.stats.qmc import LatinHypercube
 
 class var:
 
@@ -71,11 +72,11 @@ class SearchSpace:
 
     def base_init(self) -> None:
         space = {          
-            "lora_rank" : {"min" : 2,"max" : 32,"type" : "int"},
-            "lora_alpha" : {"min" : 16,"max" : 64,"type" : "int"},
+            "lora_rank" : {"min" : 2,"max" : 512,"type" : "int"},
+            "lora_alpha" : {"min" : 1,"max" : 64,"type" : "int"},
             "lora_dropout" : {"min" : 0,"max" : 0.5,"type" : "float"},
             "learning_rate" : {"min" : -10,"max" : -1,"type" : "log"},
-            "weight_decay" : {"min" : -3,"max" : -1,"type" : "log"} 
+            "weight_decay" : {"min" : -5,"max" : -1,"type" : "log"} 
             #"grad_batches" : {"min" : 1,"max" : 16,"type" : "int"},
         }
 
@@ -134,6 +135,16 @@ class SearchSpace:
             spaces[i].variables[key_max].max = lower + (i+1)*steps
         return spaces
 
+    def LHS(self,
+            g : int = 10) -> List:
+        LHS = LatinHypercube(d=self.get_dimensions())
+        LHS_points = LHS.random(n=g)
+        converted_point = np.empty_like(LHS_points)
+        for j,point in enumerate(LHS_points):
+            for i,var in enumerate(self.variables.values()):
+                converted_point[j,i] = var.scale_value(point[i])
+        return converted_point.tolist()
+
     def get_solution(self,
                      x : List) :
         sol = Solution(savefile=self.savefile,
@@ -165,7 +176,8 @@ class Solution(SearchSpace):
         self.savefile = savefile
         self.base_value = x
         self.convert_values(x)
-        self.opening_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.opening_time 
+        self.info = {}
     
     def convert_values(self,
                        x : List[float]) -> None:
@@ -192,7 +204,6 @@ class Solution(SearchSpace):
             self.score = {"score" : score}
         else : 
             self.score = score
-        self.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     def save(self):
         
         if self.savefile is None :
@@ -209,7 +220,8 @@ class Solution(SearchSpace):
         dic = {
             "timing" : time_dic,
             "solution" : sol,
-            "score" : self.score
+            "score" : self.score,
+            "info" : self.info
         }
         with open(self.savefile,"a") as f:
             json.dump(dic,f)

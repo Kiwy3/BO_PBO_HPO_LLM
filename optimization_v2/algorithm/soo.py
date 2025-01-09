@@ -32,10 +32,18 @@ class SOO :
             self.last_depth = 0
         self.objective = obj_fun
 
-    def scoring(self,l):
+    def scoring(self,
+                l) -> Tuple[float, Literal["evaluated","inherited","approximated"]] :
         x = l.space.get_center()
+        x.info = {
+            "depth" : l.depth,
+            "depth_id" : l.depth_id,
+            "loop" : l.loop,
+            "score_state" : l.score_state
+        }
+
         y = self.objective(x) * (-1 if not self.maximizer else 1)
-        gc.collect()
+        self.n_eval +=1
         return y, "evaluated"
 
     def __compare_center__(self,
@@ -87,7 +95,7 @@ class SOO :
         score,score_state = self.scoring(l)
         l.score = score
         l.score_state = score_state
-        self.n_eval +=1
+        
         self.tree[depth,new_j] = l
 
     def select(self,depth) : # OK
