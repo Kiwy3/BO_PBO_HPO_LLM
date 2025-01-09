@@ -31,26 +31,27 @@ class ModelEval:
                 experiment_name : str = "experiment1",
                 dev_run : str = "fake"):
         self.model_id = model_id
-        self.task = "hellaswag"
+        self.tasks : List = ["hellaswag","mmlu"]
         self.space = search_space
         self.folder = experiment_name
         self.dev_run = dev_run
         self.epochs = 1
 
     def train_and_evaluate(self,
-                           x : Solution):
-        if self.dev_run == "fake": # fake run for testing
+                           x : Solution) -> float:
+        
+        # fake run for testing
+        if self.dev_run == "fake": 
             print("Running fake function")
             return x.speed_run()
         
+        # get values from solution
         lora_r, lora_alpha, dropout, min_lr, weight_decay = x.get_values()
 
-
+        # training string
         optimizer_config = ("'{'class_path': 'torch.optim.AdamW', 'init_args': {"+
                 f"'lr': {min_lr}, 'weight_decay': {weight_decay}, 'betas': [{0.9}, {0.999}]"+
                 "}} '")
-
-
         training_string = (f"litgpt finetune "+ #command
                            f"{self.model_id} --out_dir {self.folder}"+ #path management
                            f" --devices {torch.cuda.device_count()}   --precision bf16-true "+ #global parameter of the training
@@ -59,25 +60,44 @@ class ModelEval:
                            f"--lora_key true --lora_value true --lora_query true --lora_head true "+#lora application
                            f"--lora_r {lora_r} --lora_alpha {lora_alpha} --lora_dropout {dropout} " #hyperparameter
                            )
+        
+        # evaluation string
+        tasks_str = "'"
+        for task in self.tasks:
+            tasks_str += task + ","
+        tasks_str = tasks_str[:-1] + "'"
         eval_string = (f"litgpt evaluate "+ # command
                        f"{self.folder}/final --out_dir eval_{self.folder} "+ # path management
-                       f"--tasks {self.task} " #tasks definition
+                       f"--tasks  {tasks_str} " #tasks definition
                        )
+        
+        # run and timestamp
         x.opening_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         os.system(training_string)
         x.end_training_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         os.system(eval_string)
         x.ending_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
+        # get results and clean it
         with open(f"eval_{self.folder}/results.json", "r") as f:
-            results = json.load(f)
-        cleaned_results = results["results"]
+            evaluation = json.load(f)
+        res = evaluation["results"]
+        cleaned_results = {}
+        for task in self.tasks:
+            cleaned_results[task] = res[task]
 
+        # add score to save
         x.add_score(cleaned_results)
         x.save()
 
+        # cleaning
         cleaning_string = f"rm -rf {self.folder} eval_{self.folder}"
         os.system(cleaning_string)
         os.system("rm -rf eval")
 
-        return cleaned_results[self.task]["acc_norm,none"]
+        # return acc (normalized or not) for hpo
+        loop_results = cleaned_results[self.tasks[0]]
+        try : #return acc_norm if available
+            return loop_results["acc_norm,none"]
+        except KeyError:
+            return loop_results["acc,none"]
