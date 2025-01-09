@@ -5,14 +5,10 @@ import json
 
 # Manage file name depending on interactive env or not
 
-exp_name = "exp12"
+exp_name = "exp11"
 file_name = exp_name + ".json"
-import __main__
-if not hasattr(__main__,"__file__"):
-    folder_name = "results"
-    file_name = folder_name + "/" + file_name
-else : 
-    folder_name = ""
+
+#file_name = "results/" + file_name
 
 # naming needs
 hp = ["lora_rank", "lora_alpha", "lora_dropout", "learning_rate", "weight_decay"]
@@ -93,10 +89,9 @@ plt.show()
 
 # Variables over time
 hp_short = ["rank", "alpha", "dropout", "lr", "decay"]
-fig, ax = plt.subplots(len(hp), 1, sharex=True)
-fig.figsize=(10, 25)
+fig, ax = plt.subplots(len(hp), 1, sharex=True,figsize=(6, 8))
 for i in range(len(hp)):
-    ax[i].scatter(base_values.index, conv_values[hp[i]], marker = "x")
+    ax[i].scatter(base_values.index, base_values[hp[i]], marker = "x")
     ax[i].set_ylabel(hp_short[i])
     if exp_name == "exp12" : ax[i].axvline(10, color='r', linestyle='dashed', linewidth=1, label="sampling")
 ax[-1].set_xlabel('iterations')
@@ -104,6 +99,16 @@ fig.suptitle(f"{exp_algo[exp_name]} : hyperparameters over iterations")
 plt.savefig(f"plots/{exp_name}_variables_over_time.png")
 plt.show()
 
+# score over variables
+hp_short = ["rank", "alpha", "dropout", "lr", "decay"]
+fig, ax = plt.subplots(1,len(hp), sharey=True, figsize=(12,4))
+for i in range(len(hp)):
+    ax[i].scatter(base_values[hp[i]],score["acc_norm"], marker = "x")
+    ax[i].set_xlabel(hp_short[i])
+ax[0].set_ylabel('score')
+fig.suptitle(f"{exp_algo[exp_name]} : score by hyperparameters value")
+plt.savefig(f"plots/{exp_name}_score_by_hp.png")
+plt.show()
 
 
 
