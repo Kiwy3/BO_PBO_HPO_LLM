@@ -5,7 +5,7 @@ import json
 
 # Manage file name depending on interactive env or not
 
-exp_name = "exp11"
+exp_name = "exp12"
 file_name = exp_name + ".json"
 
 #file_name = "results/" + file_name
@@ -54,6 +54,7 @@ score.rename(
 )
 score = score.apply(pd.to_numeric)
 score_records = score.describe()
+score_records.to_csv(f"score/{exp_name}_score.csv")
 
 # extract base values
 base_values = data[["solution.base_value"]]
