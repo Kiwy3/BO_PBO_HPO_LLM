@@ -176,7 +176,7 @@ class Solution(SearchSpace):
         self.savefile = savefile
         self.base_value = x
         self.convert_values(x)
-        self.opening_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.opening_time 
         self.info = {}
     
     def convert_values(self,
@@ -204,7 +204,6 @@ class Solution(SearchSpace):
             self.score = {"score" : score}
         else : 
             self.score = score
-        self.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     def save(self):
         
         if self.savefile is None :

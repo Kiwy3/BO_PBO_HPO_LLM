@@ -4,6 +4,8 @@ import math
 import torch
 from typing import Dict, List, Literal, Optional, Tuple, Union
 from optimization_v2.toolbox.SearchSpace import SearchSpace, Solution
+from datetime import datetime
+
 
 experiments = {
     "experiment1": {
@@ -61,8 +63,11 @@ class ModelEval:
                        f"{self.folder}/final --out_dir eval_{self.folder} "+ # path management
                        f"--tasks {self.task} " #tasks definition
                        )
+        x.opening_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         os.system(training_string)
+        x.end_training_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         os.system(eval_string)
+        x.ending_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         with open(f"eval_{self.folder}/results.json", "r") as f:
             results = json.load(f)
