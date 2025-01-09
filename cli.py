@@ -22,5 +22,7 @@ elif arg == "exp13" :
     exp13.main()
 elif arg == "exp13_bis" : 
     exp13.bis()
+elif arg == "exp13_ter" : 
+    exp13.ter()
 else : 
     print(f"Unknown argument : {arg}")

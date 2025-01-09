@@ -37,6 +37,51 @@ class ModelEval:
         self.dev_run = dev_run
         self.epochs = 1
 
+    def clean_and_add_score(self,
+                            results_folder,
+                            x : Solution):
+        # get results and clean it
+        with open(f"{results_folder}/results.json", "r") as f:
+            evaluation = json.load(f)
+        res = evaluation["results"]
+        cleaned_results = {}
+        for task in self.tasks:
+            cleaned_results[task] = res[task]
+
+        # add score to save
+        x.add_score(cleaned_results)
+        x.save()
+        
+
+
+    def evaluate(self,
+                 folder : str = "meta-llama/Llama-3.2-1B",
+                 x : Optional[Solution] = None) -> float:
+        
+        results_folder = f"eval_{folder}"
+        # evaluation string
+        tasks_str = "'"
+        for task in self.tasks:
+            tasks_str += task + ","
+        tasks_str = tasks_str[:-1] + "'"
+        if folder != self.model_id:
+            eval_string = (f"litgpt evaluate "+ # command
+                        f"{folder}/final --out_dir eval_{folder} "+ # path management
+                        f"--tasks  {tasks_str} " #tasks definition
+                        )
+        else:
+            eval_string = (f"litgpt evaluate "+ # command
+                        f"{folder} --out_dir evaluation "+ # path management
+                        f"--tasks  {tasks_str} " #tasks definition
+                        )
+            results_folder = "evaluation"
+        os.system(eval_string)
+
+        self.clean_and_add_score(results_folder,x)
+
+        
+
+
     def train_and_evaluate(self,
                            x : Solution) -> float:
         
