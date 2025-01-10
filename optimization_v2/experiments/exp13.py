@@ -44,12 +44,14 @@ def ter():
     evaluator = ModelEval(
         search_space = space,
         dev_run = "",
-        experiment_name="exp13_bis",
+        experiment_name="exp13_ter",
         model_id="meta-llama/Llama-3.2-3B"
     )
 
-    evaluator.evaluate(folder="meta-llama/Llama-3.2-3B")
-
+    x = space.get_center()
+    evaluator.evaluate(folder="meta-llama/Llama-3.2-3B",
+                       x=x)
+    
     points = space.LHS(g=10)
     for i in range(1,5):
         evaluator.epochs = i
@@ -58,4 +60,3 @@ def ter():
             x.info["epochs"] = i
             y = evaluator.train_and_evaluate(x)
             print(y)
-
