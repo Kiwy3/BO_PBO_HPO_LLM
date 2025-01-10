@@ -82,6 +82,15 @@ class BaMSOO(SOO):
         else : 
             score = self.LCB(l.space.get_center(type="list"))
             score_state = "approximated"
+
+            # To save even approximated leaf
+            x.info = {
+                "depth" : l.depth,
+                "depth_id" : l.depth_id,
+                "loop" : l.loop,
+                "score" : l.score,
+                "score_state" : score_state}
+            x.save()
         
         if score > self.fp:
             self.fp = score
