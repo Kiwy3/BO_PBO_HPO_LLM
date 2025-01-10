@@ -49,11 +49,13 @@ class BaMSOO(SOO):
         fit_gpytorch_mll(mll)
         self.gp = gp
 
-    def mean_sigma(self,X):
+    def mean_sigma(self,
+                   X:torch.Tensor) -> Tuple[float,float] :
         posterior = self.gp.posterior(X)
         return posterior.mean.detach().item(),posterior.stddev.detach().item()
     
-    def UCB(self,x) :
+    def UCB(self,
+            x : List[float]) -> float:
         mean, sigma = self.mean_sigma(torch.tensor([[x]],dtype=torch.double))
         N = len(self.tree)
         beta = math.sqrt(
@@ -64,7 +66,8 @@ class BaMSOO(SOO):
     
         return mean + beta * sigma
         
-    def LCB(self,x) :
+    def LCB(self,
+            x : List[float]) -> float:
         mean, sigma = self.mean_sigma(torch.tensor([[x]],dtype=torch.double))
         N = len(self.tree)
         beta = math.sqrt(
@@ -74,8 +77,11 @@ class BaMSOO(SOO):
         )
         return mean - beta * sigma
     
-    def scoring(self, l):
+    def scoring(self, 
+                l:leaf)-> Tuple[float, Literal["evaluated","inherited","approximated"]] :
         self.update_gp()
+        x = l.space.get_center()
+
         print("\t\tUCB : ",self.UCB(l.space.get_center(type="list")))
         if self.UCB(l.space.get_center(type="list")) >= self.fp : 
             score,score_state = super().scoring(l)
