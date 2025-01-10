@@ -16,6 +16,8 @@ if arg == "exp10_bis" :
     exp10.bis()
 elif arg == "exp11" : 
     exp11.main()
+elif arg == "exp11_bis" : 
+    exp11.bis()
 elif arg == "exp12" : 
     exp12.main()
 elif arg == "exp12_bis" : 
