@@ -88,6 +88,8 @@ class BaMSOO(SOO):
         else : 
             score = self.LCB(l.space.get_center(type="list"))
             score_state = "approximated"
+            x.add_score({"UCB" : self.UCB(l.space.get_center(type="list")),
+                        "LCB" : self.LCB(l.space.get_center(type="list"))})
 
             # To save even approximated leaf
             x.info = {
