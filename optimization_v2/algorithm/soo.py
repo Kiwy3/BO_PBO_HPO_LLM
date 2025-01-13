@@ -35,6 +35,7 @@ class SOO :
     def scoring(self,
                 l) -> Tuple[float, Literal["evaluated","inherited","approximated"]] :
         x = l.space.get_center()
+        l.score_state = "evaluated"
         x.info = {
             "depth" : l.depth,
             "depth_id" : l.depth_id,
