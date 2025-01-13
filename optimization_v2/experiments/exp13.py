@@ -47,18 +47,10 @@ def ter():
         experiment_name="exp13_ter",
         model_id="meta-llama/Llama-3.2-3B"
     )
-<<<<<<< HEAD
     x = space.get_center()
     evaluator.evaluate(folder="meta-llama/Llama-3.2-3B",
                        x=x)
 
-=======
-
-    x = space.get_center()
-    evaluator.evaluate(folder="meta-llama/Llama-3.2-3B",
-                       x=x)
-    
->>>>>>> e495c91344ac7846180ffc182623f14dfaa995c8
     points = space.LHS(g=10)
     for i in range(1,5):
         evaluator.epochs = i
