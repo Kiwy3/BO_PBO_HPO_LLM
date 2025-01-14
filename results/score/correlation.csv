@@ -1,0 +1,6 @@
+hyperparameter,correlation
+lora_rank,0.5590260509036643
+lora_alpha,-0.5435142634565987
+lora_dropout,0.11789078292484087
+learning_rate,0.2397363052789345
+weight_decay,0.1315959797785234
