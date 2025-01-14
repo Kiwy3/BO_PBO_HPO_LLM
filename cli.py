@@ -1,5 +1,5 @@
 import sys
-from optimization_v2.experiments import exp10, exp11, exp12, exp13
+from optimization_v2.experiments import exp10, exp11, exp12, exp13, sampling
 
 
 if len(sys.argv) < 2:
@@ -28,5 +28,8 @@ elif arg == "exp13_bis" :
     exp13.bis()
 elif arg == "exp13_ter" : 
     exp13.ter()
+
+elif arg == "sampling" : 
+    sampling.main()
 else : 
     print(f"Unknown argument : {arg}")
