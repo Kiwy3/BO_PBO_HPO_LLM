@@ -127,7 +127,7 @@ class SOO :
                 print(f"\t leaf number {l.depth_id} : ")
                 print(f"\t\t center : {l.space.get_center().get_values()}, score = {l.score}, state : {l.state}, score_state : {l.score_state}")
 
-    def save(self, filename = "tree.json"): #OK
+    def save(self, filename = "soo_tree.json"): #OK
         export = {
             "global" : {
                 "K" : self.K,

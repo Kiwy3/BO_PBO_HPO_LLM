@@ -137,7 +137,7 @@ class BaMSOO(SOO):
                 init= True       
             )
 
-    def save(self,filename="bamsoo.json"):
+    def save(self,filename="bamsoo_tree.json"):
         super().save(filename)
 
     def run(self,budget = 5,saving=False) :
