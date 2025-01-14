@@ -142,7 +142,5 @@ class ModelEval:
 
         # return acc (normalized or not) for hpo
         loop_results = cleaned_results[self.tasks[0]]
-        try : #return acc_norm if available
-            return loop_results["acc_norm,none"]
-        except KeyError:
-            return loop_results["acc,none"]
+
+        return loop_results["acc,none"]
