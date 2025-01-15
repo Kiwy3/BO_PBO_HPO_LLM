@@ -5,7 +5,7 @@ import json
 
 # Manage file name depending on interactive env or not
 
-exp_name = "exp12"
+exp_name = "exp11_bis"
 file_name = exp_name + ".json"
 
 #file_name = "results/" + file_name
@@ -15,6 +15,7 @@ hp = ["lora_rank", "lora_alpha", "lora_dropout", "learning_rate", "weight_decay"
 exp_algo = {
     "exp10" : "SOO",
     "exp11" : "BaMSOO",
+    "exp11_bis" : "BaMSOO",
     "exp12" : "BO",
 }
 
@@ -22,7 +23,7 @@ exp_algo = {
 with open(file_name, 'r') as f:
     input = [json.loads(line) for line in f]
 data = pd.json_normalize(input)
-if len(data) > 50 : data = data.loc[:49]
+#if len(data) > 50 : data = data.loc[:49]
 
 
 # Compute time diff
@@ -75,6 +76,12 @@ conv_values.rename(
     },
     inplace=True
 )
+#Split score between evaluated and approx
+score_state = data["info.score_state"]
+
+evaluated = score[score_state == "evaluated"]
+approx = score[score_state == "approximated"]
+
 
 """--------------------------Plots ------------------------"""
 # Score over time plots
