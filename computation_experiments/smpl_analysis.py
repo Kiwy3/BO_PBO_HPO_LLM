@@ -2,7 +2,7 @@ import json
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-
+from datetime import datetime
 
 exp_name = "lhs"
 file_name = "results/" + exp_name + ".json"
@@ -30,9 +30,9 @@ Solution = pd.DataFrame(Solution.to_list(),columns=hp_names)
 
 
 # Box plot
-plt.figure(figsize=(6,6))
+plt.figure(figsize=(10,6))
 sns.boxplot(score, saturation=0.5,width=0.4,
-            whis=(0,100),
+            #whis=(0,100),
             medianprops={"color": "black", "linewidth": 2},
             palette="pastel",
             )
@@ -40,29 +40,19 @@ plt.title("Box plot of sampling algorithm")
 plt.savefig("plots/sampling/box_plot.png")
 plt.show()
 
-# Mosaic on variable evolution
 
-""" mosaic_str = (
-""
-AAADD
-AAADD
-BBBDD
-BBBEE
-CCCEE
-CCCEE
+print(score.corr())
+def days_between(d1, d2):
+    d1 = datetime.strptime(d1, '%Y-%m-%d %H:%M:%S')
+    d2 = datetime.strptime(d2, '%Y-%m-%d %H:%M:%S')
+    sec = abs((d2 - d1).seconds)
+    hours = int(sec/3600)
+    minute = int((sec - hours*3600)/60)
+    return f"{int(sec / 3600)} hours, {minute} minutes and {sec % 60} seconds"
+start_date = min(data["timing"].apply(lambda x : x["opening_time"]))
+end_date = max(data["timing"].apply(lambda x : x["starting_time"]))
 
-"")
-fig, ax = plt.subplot_mosaic(mosaic_str)
-plots_names = ["A","B","C","D","E"]
-
-for i in range(len(hp_names)):
-      ax[plots_names[i]].scatter(
-            Solution.index,
-            Solution[hp_names[i]],
-            s=3,
-            marker = "x"
-      )
-      ax[plots_names[i]].set_title(hp_names[i]) """
+print(days_between(start_date, end_date))
 
 
 
