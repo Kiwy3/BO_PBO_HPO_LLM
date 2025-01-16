@@ -37,7 +37,7 @@ sns.boxplot(score, saturation=0.5,width=0.4,
             palette="pastel",
             )
 plt.title("Box plot of sampling algorithm")
-plt.savefig("plots/sampling/box_plot.png")
+plt.savefig("plots/sampling/lhs_box_plot.png")
 plt.show()
 
 
