@@ -42,6 +42,9 @@ plt.show()
 
 
 print(score.corr())
+print(Solution.apply(lambda x : x.corr(score["hellaswag"])))
+
+
 def days_between(d1, d2):
     d1 = datetime.strptime(d1, '%Y-%m-%d %H:%M:%S')
     d2 = datetime.strptime(d2, '%Y-%m-%d %H:%M:%S')
