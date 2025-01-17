@@ -58,7 +58,19 @@ end_date = max(data["timing"].apply(lambda x : x["starting_time"]))
 print(days_between(start_date, end_date))
 
 
+concatenated = pd.concat((score,Solution),axis=1)
+correlation = concatenated.corr()
 
+plt.figure(figsize=(4,6))
+sns.heatmap(correlation[["mmlu","hellaswag"]].drop("hellaswag_norm"),
+    cmap = sns.diverging_palette(230, 20, as_cmap=True),
+    vmin=-1,
+    annot=True,
+    cbar=False
+    )
+plt.title("Correlation heatmap")
+plt.savefig("plots/sampling/lhs_correlation.png")
+plt.show()
 
 
 
