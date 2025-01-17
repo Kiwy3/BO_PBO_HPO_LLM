@@ -40,7 +40,11 @@ elif arg == "bo_bis" :
     bo.bis()
 elif arg == "soo" : 
     soo.main()
+elif arg == "soo_bis" : 
+    soo.bis()
 elif arg == "bamsoo" : 
     bamsoo.main()
+elif arg == "bamsoo_bis" : 
+    bamsoo.bis()
 else : 
     print(f"Unknown argument : {arg}")

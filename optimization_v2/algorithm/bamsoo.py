@@ -110,7 +110,8 @@ class BaMSOO(SOO):
         l = leaf(
             space=space,
             depth=depth,
-            depth_id = new_j        
+            depth_id = new_j,
+            loop=self.loop       
         )
         if parent is not None :
             if self.__compare_center__(parent.space.get_center(),l.space.get_center()) and parent.score_state in["evaluated","inherited"] : 
