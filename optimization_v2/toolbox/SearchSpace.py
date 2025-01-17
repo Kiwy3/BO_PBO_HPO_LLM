@@ -180,7 +180,7 @@ class Solution(SearchSpace):
         
         self.opening_time = ""
         self.end_training_time = ""
-        self.end_time = ""
+        self.ending_time = ""
     
     def convert_values(self,
                        x : List[float]) -> None:
@@ -213,8 +213,8 @@ class Solution(SearchSpace):
             return
         time_dic = {
             "opening_time" : self.opening_time,
-            "starting_time" : self.end_training_time,
-            "ending_time" : self.end_time
+            "end_training_time" : self.end_training_time,
+            "ending_time" : self.ending_time
         }
 
         sol = {}
