@@ -72,7 +72,7 @@ class SearchSpace:
 
     def base_init(self) -> None:
         space = {          
-            "lora_rank" : {"min" : 2,"max" : 512,"type" : "int"},
+            "lora_rank" : {"min" : 2,"max" : 64,"type" : "int"},
             "lora_alpha" : {"min" : 1,"max" : 64,"type" : "int"},
             "lora_dropout" : {"min" : 0,"max" : 0.5,"type" : "float"},
             "learning_rate" : {"min" : -10,"max" : -1,"type" : "log"},

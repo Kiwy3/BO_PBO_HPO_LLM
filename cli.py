@@ -32,8 +32,12 @@ elif arg == "exp13_ter" :
 
 elif arg == "sampling" : 
     sampling.main()
+elif arg == "lhs_bis" : 
+    sampling.bis()
 elif arg == "bo" : 
     bo.main()
+elif arg == "bo_bis" : 
+    bo.bis()
 elif arg == "soo" : 
     soo.main()
 elif arg == "bamsoo" : 
