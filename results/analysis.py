@@ -5,7 +5,7 @@ import json
 
 # Manage file name depending on interactive env or not
 
-exp_name = "exp11_bis"
+exp_name = "exp12"
 file_name = exp_name + ".json"
 
 #file_name = "results/" + file_name
@@ -76,17 +76,13 @@ conv_values.rename(
     },
     inplace=True
 )
-#Split score between evaluated and approx
-score_state = data["info.score_state"]
 
-evaluated = score[score_state == "evaluated"]
-approx = score[score_state == "approximated"]
 
 
 """--------------------------Plots ------------------------"""
 # Score over time plots
 plt.title(f"{exp_algo[exp_name]} : Score over time")
-plt.scatter(score.index, score["acc_norm"], marker = "x")
+plt.scatter(score.index, score["acc"], marker = "x")
 plt.xlabel("iterations")
 plt.ylabel("Hellaswag acc_norm")
 if exp_name == "exp12" : plt.axvline(10, color='r', linestyle='dashed', linewidth=1, label="sampling")
