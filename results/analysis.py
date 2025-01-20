@@ -99,7 +99,7 @@ for i in range(len(hp)):
     ax[i].set_ylabel(hp_short[i])
     if exp_name == "exp12" : ax[i].axvline(10, color='r', linestyle='dashed', linewidth=1, label="sampling")
 ax[-1].set_xlabel('iterations')
-fig.suptitle(f"{exp_algo[exp_name]} : hyperparameters over iterations")
+#fig.suptitle(f"{exp_algo[exp_name]} : hyperparameters over iterations")
 plt.savefig(f"plots/{exp_name}_variables_over_time.png")
 plt.show()
 
