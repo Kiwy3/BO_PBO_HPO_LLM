@@ -20,6 +20,7 @@ score["mmlu"] = score["score"].apply(lambda x : x["mmlu"]["acc,none"])
 score["hellaswag"] = score["score"].apply(lambda x : x["hellaswag"]["acc,none"])
 #score["hellaswag_norm"] = score["score"].apply(lambda x : x["hellaswag"]["acc_norm,none"])
 score.pop("score")
+score.describe().to_csv(f"score/{exp_name}_score.csv")
 print(score.describe())
 
 # Extract hp
