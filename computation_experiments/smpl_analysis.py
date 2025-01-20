@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-exp_name = "lhs"
+exp_name = "lhs_bis"
 file_name = "results/" + exp_name + ".json"
 datas = []
 with open(file_name, 'r') as f:
@@ -35,7 +35,7 @@ def days_between(d1, d2):
     minute = int((sec - hours*3600)/60)
     return f"{int(sec / 3600)} hours, {minute} minutes and {sec % 60} seconds"
 start_date = min(data["timing"].apply(lambda x : x["opening_time"]))
-end_date = max(data["timing"].apply(lambda x : x["starting_time"]))
+end_date = max(data["timing"].apply(lambda x : x["ending_time"]))
 
 print(days_between(start_date, end_date))
 print(score.corr())
