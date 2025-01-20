@@ -48,7 +48,7 @@ concatenated = pd.concat((score,Solution),axis=1)
 correlation = concatenated.corr()
 
 # box plot figure
-plt.figure(figsize=(10,6))
+plt.figure(figsize=(6,6))
 sns.boxplot(score, saturation=0.5,width=0.4,
             #whis=(0,100),
             medianprops={"color": "black", "linewidth": 2},
@@ -67,6 +67,7 @@ sns.heatmap(correlation[["mmlu","hellaswag"]],
     cbar=False
     )
 plt.title("Correlation heatmap")
+plt.tight_layout()
 plt.savefig("plots/sampling/lhs_correlation.png")
 plt.show()
 
