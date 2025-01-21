@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-exp_name = "bo"
+exp_name = "bo_bis"
 file_name = "results/" + exp_name + ".json"
 datas = []
 with open(file_name, 'r') as f:
