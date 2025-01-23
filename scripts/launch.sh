@@ -7,9 +7,8 @@
 #OAR -E exp10_%jobid%.err
 
 date
-cd /home/ndavouse/llm
 
-source /home/ndavouse/llm/.env/bin/activate
+source .env/bin/activate
 python cli.py $1
 
 deactivate
