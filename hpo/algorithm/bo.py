@@ -5,7 +5,7 @@ import datetime
 from pathlib import Path
 import matplotlib.pyplot as plt
 
-from optimization_v2.toolbox.SearchSpace import SearchSpace, Solution
+from hpo.core.SearchSpace import SearchSpace, Solution
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
 from scipy.stats.qmc import LatinHypercube

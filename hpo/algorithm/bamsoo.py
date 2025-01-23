@@ -1,5 +1,5 @@
-from optimization_v2.algorithm.soo import SOO, leaf, fun_error
-from optimization_v2.toolbox.SearchSpace import SearchSpace, Solution
+from hpo.algorithm.soo import SOO, leaf, fun_error
+from hpo.core.SearchSpace import SearchSpace, Solution
 
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
