@@ -1,4 +1,4 @@
-from hpo.core.SearchSpace import SearchSpace, Solution
+from hpo.core.searchspace import SearchSpace, Solution
 from typing import Dict, List, Literal, Optional, Tuple, Union, Callable
 import numpy as np
 

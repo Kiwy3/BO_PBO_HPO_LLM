@@ -1,6 +1,6 @@
 #other part of hpo package
-from hpo.core.SearchSpace import SearchSpace, Solution
-from hpo.algorithm.optimization import algorithm
+from hpo.core.searchspace import SearchSpace, Solution
+from hpo.core.algorithm import algorithm
 from hpo.algorithm.utils import leaf
 #computation and file writing lib
 import numpy as np

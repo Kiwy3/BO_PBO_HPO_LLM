@@ -1,4 +1,4 @@
-from hpo.core.SearchSpace import SearchSpace
+from hpo.core.searchspace import SearchSpace
 
 class leaf :
     def __init__(self,

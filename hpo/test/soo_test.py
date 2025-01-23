@@ -1,4 +1,4 @@
-from hpo.core.SearchSpace import SearchSpace, Solution
+from hpo.core.searchspace import SearchSpace, Solution
 from algorithm.soo import SOO
 
 def himmelblau(solution : Solution) :
