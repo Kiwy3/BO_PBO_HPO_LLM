@@ -3,7 +3,7 @@ from copy import deepcopy as dc
 import gc
 import json
 import matplotlib.pyplot as plt
-from optimization_v2.toolbox.SearchSpace import SearchSpace, Solution
+from hpo.core.SearchSpace import SearchSpace, Solution
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
 def himmelblau(x) :
