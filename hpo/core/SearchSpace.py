@@ -55,16 +55,17 @@ class var:
 class SearchSpace:
 
     def __init__(self,
-                 variables : Optional[dict] =None , 
+                 variables : Optional[dict[str,dict]] =None , 
                  mode : Optional[str]  = None,
                  savefile : Optional[str] = None):
         self.savefile = savefile
+        self.variables = {}
         if variables is not None:
             for key, value in variables.items():
-                variable = value["name"] = key
-                self.add_variable(variable)
+                value["name"] = key
+                self.add_variable(value)
         else : 
-            self.variables = {}
+            
             if mode == "base":
                 self.base_init()
         #self.center = self.get_center()
@@ -82,6 +83,7 @@ class SearchSpace:
 
         for key, value in space.items():
             value["name"] = key
+            
             self.add_variable(value)
         
     def get_dimensions(self) -> int:
