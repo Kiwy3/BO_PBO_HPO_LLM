@@ -1,0 +1,9 @@
+,opening_time,end_training_time,ending_time
+count,0,203,203
+mean,,0 days 00:30:34.325123152,0 days 00:12:43.078817733
+std,,0 days 00:00:34.299535391,0 days 00:00:12.373866367
+min,,0 days 00:29:05,0 days 00:12:20
+25%,,0 days 00:30:14.500000,0 days 00:12:33.500000
+50%,,0 days 00:30:34,0 days 00:12:42
+75%,,0 days 00:30:56,0 days 00:12:51
+max,,0 days 00:32:14,0 days 00:13:36
