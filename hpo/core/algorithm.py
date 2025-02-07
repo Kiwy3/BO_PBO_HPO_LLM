@@ -21,6 +21,8 @@ class algorithm:
         solution.info = info
         Y = self.objective(solution)*(-1 if not self.maximizer else 1)
         self.n_eval += 1
+        if solution.score is None:
+            solution.add_score(Y)
         self.historic.append(solution)
         return solution, Y
     
@@ -29,5 +31,14 @@ class algorithm:
         max_index = np.argmax(solution_score)
         best_solution = self.historic[max_index]
         return best_solution
+    
+    def print(self):
+        print("Printing all solutions")
+        for i,x in enumerate(self.historic):
+            print(f"Solution number {i+1}")
+            print(f"\t Solution = {x.get_values()}")
+            print(f"\t Score = {x.score}")
+            print(f"\t Info = {x.info}")
+
     
     
