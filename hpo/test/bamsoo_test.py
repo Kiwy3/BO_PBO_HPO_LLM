@@ -1,5 +1,5 @@
 from hpo.core.searchspace import SearchSpace, Solution
-from hpo.algorithm.bamsoo_2 import BaMSOO
+from hpo.algorithm.bamsoo import BaMSOO
 
 def himmelblau(solution : Solution) :
         x = solution.get_values()
