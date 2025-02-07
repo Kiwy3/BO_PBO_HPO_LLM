@@ -183,6 +183,7 @@ class Solution(SearchSpace):
         self.opening_time = ""
         self.end_training_time = ""
         self.ending_time = ""
+        self.score = None
     
     def convert_values(self,
                        x : List[float]) -> None:
