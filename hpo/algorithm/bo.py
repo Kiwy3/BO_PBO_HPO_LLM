@@ -57,7 +57,7 @@ class BoGp(algorithm):
             X = self.search_space.get_solution(point)
             X, _ = self.scoring(solution=X,info={"phase":"sampling"})
 
-    def get_points_tensors(self):
+    def get_points_tensors(self) -> Tuple[torch.Tensor, torch.Tensor]:
         points = [x.get_values() for x in self.historic]
         scores = [x.score for x in self.historic]
         return torch.tensor(points, dtype=torch.double), torch.tensor(scores, dtype=torch.double).unsqueeze(-1)
