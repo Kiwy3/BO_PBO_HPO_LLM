@@ -23,6 +23,8 @@ class algorithm:
         self.n_eval += 1
         if solution.score is None:
             solution.add_score(Y)
+        else : 
+            solution.score = solution.score * (-1 if not self.maximizer else 1)
         self.historic.append(solution)
         return solution, Y
     
