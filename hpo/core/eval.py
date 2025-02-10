@@ -3,7 +3,7 @@ import json
 import math
 import torch
 from typing import Dict, List, Literal, Optional, Tuple, Union
-from hpo.core.SearchSpace import SearchSpace, Solution
+from hpo.core.searchspace import SearchSpace, Solution
 from datetime import datetime
 
 

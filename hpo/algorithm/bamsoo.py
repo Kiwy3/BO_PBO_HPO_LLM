@@ -1,7 +1,8 @@
-from hpo.algorithm.soo import SOO, leaf, fun_error
-from hpo.core.SearchSpace import SearchSpace, Solution
+from hpo.algorithm.soo import SOO, leaf
+from hpo.algorithm.bo import BoGp
+from hpo.core.searchspace import SearchSpace, Solution
 
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import Dict, List, Literal, Optional, Tuple, Union,Callable
 
 import torch
 import math
@@ -11,34 +12,26 @@ from botorch.models.transforms import Normalize, Standardize
 from botorch.fit import fit_gpytorch_mll
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
-class BaMSOO(SOO):
-
+class BaMSOO(SOO, BoGp):
     def __init__(self, #OK
-            space : Optional[SearchSpace]  = None,
+            objective_function : Callable,
+            search_space : Optional[SearchSpace]  = None,
             maximizer : Optional[bool] = True,
             K : int = 3,
-            filename : str = None,
+            savefile : str = None,
             eta : float = 0.5,
-            obj_fun = fun_error) :
+            ) :
         
-        super().__init__( 
-            space = space,
+        SOO.__init__(self, 
+            search_space = search_space,
             maximizer = maximizer,
             K = K,
-            filename = filename,
-            obj_fun=obj_fun )
+            savefile = savefile,
+            objective_function=objective_function)
         self.eta = eta
 
-    def get_points(self):
-        points = [l.space.get_center(type="list") for l in self.tree.values() if l.score_state=="evaluated"]
-        scores = [l.score for l in self.tree.values() if l.score_state=="evaluated"]
-        return points, scores
-
-
     def update_gp(self):
-        X,Y = self.get_points()
-        train_X = torch.tensor(X).to(torch.double)
-        train_Y = torch.tensor(Y).unsqueeze(-1).to(torch.double)
+        train_X, train_Y = BoGp.get_points_tensors(self)
         gp = SingleTaskGP(
             train_X=train_X,
             train_Y=train_Y,
@@ -83,11 +76,14 @@ class BaMSOO(SOO):
         x = l.space.get_center()
 
         print("\t\tUCB : ",self.UCB(l.space.get_center(type="list")))
+        print("\t\tLCB : ",self.LCB(l.space.get_center(type="list")))
+
         if self.UCB(l.space.get_center(type="list")) >= self.fp : 
-            score,score_state = super().scoring(l)
+            l.score_state = "evaluated"
+            score = SOO.scoring(self,l)
         else : 
             score = self.LCB(l.space.get_center(type="list"))
-            score_state = "approximated"
+            l.score_state = "approximated"
             x.add_score({"UCB" : self.UCB(l.space.get_center(type="list")),
                         "LCB" : self.LCB(l.space.get_center(type="list"))})
 
@@ -97,13 +93,13 @@ class BaMSOO(SOO):
                 "depth_id" : l.depth_id,
                 "loop" : l.loop,
                 "score" : l.score,
-                "score_state" : score_state}
+                "score_state" : l.score_state}
             x.save()
         
         if score > self.fp:
             self.fp = score
 
-        return score, score_state
+        return score
     def add_leaf(self,space,depth,new_j,
                  parent : leaf=None,init=False) : #OK
 
@@ -123,11 +119,10 @@ class BaMSOO(SOO):
                 parent.state=False
         
         if init : 
-            score, score_state = super().scoring(l)
+            score = SOO.scoring(self,l)
         else :        
-            score, score_state = self.scoring(l)
-        l.score = score
-        l.score_state = score_state       
+            score = self.scoring(l)
+        l.score = score      
         self.tree[depth,new_j] = l
     
     def initiate(self): #OK
@@ -156,9 +151,7 @@ class BaMSOO(SOO):
 
                 if self.tree[h,j].score > vmax:
                     spaces = self.tree[h,j].space.section(self.K)
-                    for i in range(self.K):
-                        self.update_gp()
-                        
+                    for i in range(self.K):                      
 
                         self.add_leaf(
                             parent = self.tree[h,j],

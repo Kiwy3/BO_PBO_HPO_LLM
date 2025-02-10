@@ -1,2 +1,2 @@
-from hpo.core.EvalClass import ModelEval
-from hpo.core.SearchSpace import SearchSpace, Solution
+from hpo.core.eval import ModelEval
+from hpo.core.searchspace import SearchSpace, Solution
