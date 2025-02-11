@@ -3,9 +3,10 @@
 This repository is used for the afornamed article, written for *International Conference on Optimization and Learning (OLA2025)*. It aim to be reproducible, with a brief guide about how to do it. Since hardware needed for experiments is mostly on unix-managed cluster, this guide suppose unix installation.
 
 
+## First time
+When using this repo, there are things to do mostly for the first time, this part adress this. 
 
 ## Install the repo
-
 first step, clone the repository and go the the directory : 
 
 ```
@@ -20,6 +21,23 @@ $ python -m venv .env
 $ source .env/bin/activate
 $ pip install -r requirements.txt
 ```
+## Download a model
+For the first time, some model need specific steps. Models are downloaded from [HuggingFace](https://huggingface.co/), directly with *litgpt* command lines. 
+
+First, to look at possible model, one can use *litgpt download list*, to obtain the list, and then use *litgpt download model_id* to download this model
+
+```
+$ litgpt download list
+$ litgpt download meta-llama/Llama-3.2-1B
+```
+
+For model like Llama ones, or others with specific access, it's might be necessary to go to [HuggingFace](https://huggingface.co/), and request specific access to the model. 
+
+With this access, it's possible to generate an access token on HuggingFace, to use it with litgpt like this : 
+```
+$ litgpt download meta-llama/Llama-3.2-1B  --access_token ACCESS_TOKEN
+```
+
 
 ## Launch an experiment
 Based on grid5000 documentation, there are two ways to launch an experiment : using *passive* or *interactive* launch. 
@@ -119,3 +137,14 @@ else : #already in cli.py
 
 TO DO
 
+
+## Possibles errors
+
+### Generating examples inside validation loop
+During some test, I had trouble with litgpt finetune, because of one line generating example that was not working. 
+To deal with it, you can open the *litgpt/finetune/lora.py* file inside the virtual env, and comment out line 371 (*generate_example(fabric, model, tokenizer, eval, data)*). 
+
+```
+$ cd .env/lib/python3.9/site-packages/litgpt/finetune/
+$ emacs lora.py # or other editor
+```
