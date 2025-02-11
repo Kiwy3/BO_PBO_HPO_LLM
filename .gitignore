@@ -1,6 +1,6 @@
 .v-env
 v-env/
-
+.env
 .venv
 venv/
 
